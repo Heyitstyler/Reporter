@@ -8,12 +8,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 
-#print(workingDir)
-
-#print(workingDir)
-#time.sleep(5)
-
-
 # load bar database
 bars = pd.read_csv("bardb.csv")
 
@@ -85,26 +79,53 @@ navigate_summary = summary_driver.find_element(By.ID, 'inventoriesButton')
 navigate_summary.click()
 
 # Choose full Inventory
-time.sleep(3)
+time.sleep(2)
 full_summary = summary_driver.find_element(By.XPATH, '/html/body/div/div[4]/div/div[3]/div[2]/table/tbody/tr[1]/td[1]/a[1]')
 full_summary.click()
 
 # open Download menu
-time.sleep(3)
+time.sleep(2)
 dropdown_summary = summary_driver.find_element(By.XPATH, '//*[@id="dropdownMenu1"]')
 dropdown_summary.click()
 
 # download summary
-time.sleep(3)
+time.sleep(2)
 download_summary = summary_driver.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/ul/li[1]/a')
 download_summary.click()
+
+# select inventories for usage report
+use_start_date_drop = usage_driver.find_element(By.ID, "startInventoryId")
+use_start_date_drop.click()
+time.sleep(1)
+use_start_date_select = usage_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
+use_start_date_select.click()
+use_end_date_drop = usage_driver.find_element(By.ID, "endInventoryId")
+use_end_date_drop.click()
+time.sleep(1)
+use_end_date_select = usage_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
+use_end_date_select.click()
+time.sleep(1)
+
+# select inventories for variance report
+var_start_date_drop = variance_driver.find_element(By.ID, "startInventoryId")
+var_start_date_drop.click()
+time.sleep(1)
+var_start_date_select = variance_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
+var_start_date_select.click()
+var_end_date_drop = variance_driver.find_element(By.ID, "endInventoryId")
+var_end_date_drop.click()
+time.sleep(1)
+var_end_date_select = variance_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
+var_end_date_select.click()
+time.sleep(3)
 
 # run report
 run_js = 'runReport()'
 variance_driver.execute_script(run_js)
 usage_driver.execute_script(run_js)
 
-time.sleep(8)
+# let the report run
+time.sleep(10)
 
 # download report
 download_js = 'downloadReport()'
