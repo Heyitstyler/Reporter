@@ -125,9 +125,15 @@ variance_driver.execute_script(run_js)
 usage_driver.execute_script(run_js)
 
 # let the report run
-time.sleep(10)
+time.sleep(4)
 
 # download report
 download_js = 'downloadReport()'
 variance_driver.execute_script(download_js)
 usage_driver.execute_script(download_js)
+time.sleep(15)
+
+# close drivers
+variance_driver.quit()
+usage_driver.quit()
+summary_driver.quit()
