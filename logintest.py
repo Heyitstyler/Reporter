@@ -28,7 +28,7 @@ options.set_preference("browser.download.manager.showWhenStarting", False)
 options.set_preference("browser.download.dir", workingDir)
 options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
 
-# options.add_argument("--headless")
+options.add_argument("--headless")
 variance_driver = webdriver.Firefox(options=options)
 usage_driver = webdriver.Firefox(options=options)
 summary_driver = webdriver.Firefox(options=options)
