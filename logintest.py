@@ -131,7 +131,7 @@ time.sleep(4)
 download_js = 'downloadReport()'
 variance_driver.execute_script(download_js)
 usage_driver.execute_script(download_js)
-time.sleep(15)
+time.sleep(20)
 
 # close drivers
 variance_driver.quit()
