@@ -1,3 +1,2 @@
-python logintest.py
-cd downloads
+cd Scripts
 python adjuster.py

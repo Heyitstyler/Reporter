@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -7,19 +8,61 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
+# Directory
+dir_Scripts = os.getcwd()
+os.chdir("..")
+dir_Root = os.getcwd()
+dir_Downloads = dir_Root + r"\_downloads"
+dir_DB = dir_Root + r"\DB"
+
+
 
 # load bar database
+os.chdir(dir_DB)
 bars = pd.read_csv("bardb.csv")
 
 # user bar select
 barSelect = input("What bar are we working with: ")
 
+
 # pull pass from db
 userRow = bars[bars["user"] == barSelect]
+
+if userRow.empty:
+    print("Username not found. Exiting.")
+    time.sleep(5)
+    exit()
+
 passwd = userRow["pass"]
 
-os.chdir('downloads')
+
+# Select Download Speed
+speed_Input = input("How fast is your internet? 1 - Fast, 2 - Average, 3 - Slow: ")
+
+if speed_Input == '1':
+    dlspeed = 20
+elif speed_Input == '2':
+    dlspeed = 25
+elif speed_Input == '3':
+    dlspeed = 30
+else:
+    print("Invalid Entry")
+    time.sleep(5)
+    exit()
+    
+
+# Make the bar folder
+os.chdir(dir_Downloads)
+exists = os.path.exists(barSelect)
+if not exists:
+    os.makedirs(barSelect)
+os.chdir(barSelect)
+
+
+dir_BarFolder = os.path.join(dir_Downloads, barSelect)
+print (dir_BarFolder)
 workingDir = os.getcwd()
+
 
 # create a new instance of the Firefox driver
 options = Options()
@@ -27,8 +70,8 @@ options.set_preference("browser.download.folderList", 2)
 options.set_preference("browser.download.manager.showWhenStarting", False)
 options.set_preference("browser.download.dir", workingDir)
 options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
-
 options.add_argument("--headless")
+
 variance_driver = webdriver.Firefox(options=options)
 usage_driver = webdriver.Firefox(options=options)
 summary_driver = webdriver.Firefox(options=options)
@@ -131,9 +174,13 @@ time.sleep(4)
 download_js = 'downloadReport()'
 variance_driver.execute_script(download_js)
 usage_driver.execute_script(download_js)
-time.sleep(20)
+time.sleep(dlspeed)
 
 # close drivers
 variance_driver.quit()
 usage_driver.quit()
 summary_driver.quit()
+
+# Finished
+print ("Downloads Complete! Adjusting Variance.")
+os.chdir(dir_Scripts)
