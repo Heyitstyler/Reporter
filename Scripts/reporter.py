@@ -12,7 +12,7 @@ from selenium.webdriver.common.by import By
 dir_Scripts = os.getcwd()
 os.chdir("..")
 dir_Root = os.getcwd()
-dir_Downloads = dir_Root + r"\.downloads"
+dir_Downloads = dir_Root + r"\_downloads"
 dir_DB = dir_Root + r"\DB"
 
 
