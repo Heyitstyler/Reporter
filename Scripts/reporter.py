@@ -34,7 +34,10 @@ if userRow.empty:
     exit()
 
 passwd = userRow["pass"]
+proper = userRow["proper"]
 
+#print (passwd)
+#print (proper)
 
 # Select Download Speed
 speed_Input = input("How fast is your internet? 1 - Fast, 2 - Average, 3 - Slow: ")

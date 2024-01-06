@@ -1,6 +1,8 @@
 from reporter import dir_BarFolder
 from reporter import dir_Scripts
 from reporter import dir_Root
+from reporter import proper
+import pandas as pd
 import os
 import glob
 import xlwings as xw
@@ -39,6 +41,16 @@ if matching_files:
         app.quit()
 else:
     print("No Excel files starting with 'VarianceReport' found in the specified directory.")
+try:
+    proper_str = proper.iloc[0] if isinstance(proper, pd.Series) else str(proper)  # Convert to string
+    for filename in os.listdir(dir_BarFolder):
+        if os.path.isfile(os.path.join(f"{dir_BarFolder}", filename)):
+            new_filename = proper_str + "_" + filename
+            os.rename(os.path.join(f"{dir_BarFolder}", filename), os.path.join(f"{dir_BarFolder}", new_filename))
+            print(f"Renamed '{filename}' to '{new_filename}'")
+except Exception as e:
+    print (f"an error occurred: {e}")
+    input("press enter to exit")
 
 # Restart?
 restart = input("Would you like to run another bar? (y/n)")
