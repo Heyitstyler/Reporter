@@ -52,7 +52,7 @@ def dlSummary():
 
     # Check if any file contains the keyword
         for file in files:
-            if keyword in file:
+            if file.startswith(keyword):
                 print(f"Found file: {file}")
                 time.sleep(0.5)
                 summary_driver.quit()
@@ -109,7 +109,7 @@ def dlUsage():
 
     # Check if any file contains the keyword
         for file in files:
-            if keyword in file:
+            if file.startswith(keyword):
                 print(f"Found file: {file}")
                 time.sleep(0.5)
                 usage_driver.quit()
@@ -166,7 +166,7 @@ def dlVar():
 
     # Check if any file contains the keyword
         for file in files:
-            if keyword in file:
+            if file.startswith(keyword):
                 print(f"Found file: {file}")
                 time.sleep(0.5)
                 variance_driver.quit()
