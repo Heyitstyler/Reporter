@@ -53,12 +53,22 @@ def adjust():
 
 def namer():
     proper_str = proper.iloc[0] if isinstance(proper, pd.Series) else str(proper)  # Convert to string
-    for filename in os.listdir(dir_BarFolder):
-        if os.path.isfile(os.path.join(f"{dir_BarFolder}", filename)):
-            new_filename = proper_str + "_" + filename
-            os.rename(os.path.join(f"{dir_BarFolder}", filename), os.path.join(f"{dir_BarFolder}", new_filename))
-            print(f"Renamed '{filename}' to '{new_filename}'")
 
+    for filename in os.listdir(dir_BarFolder):
+        if os.path.isfile(os.path.join(dir_BarFolder, filename)):
+            if proper_str not in filename:
+                # Splitting the filename from its extension
+                file_base, file_extension = os.path.splitext(filename)
+                new_filename = proper_str + "_" + file_base + file_extension
+
+                # Check if the new filename already exists
+                count = 1
+                while os.path.exists(os.path.join(dir_BarFolder, new_filename)):
+                    new_filename = f"{proper_str}_{file_base}_{count}{file_extension}"
+                    count += 1
+                
+                os.rename(os.path.join(dir_BarFolder, filename), os.path.join(dir_BarFolder, new_filename))
+                print(f"Renamed '{filename}' to '{new_filename}'")
 
 
 # # Restart?
