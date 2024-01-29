@@ -95,8 +95,13 @@ t5.join()
 print ("Done!")
 
 restart = input("Would you like to run another bar? (y/n)")
-if restart == "y":
-    os.chdir(dir_Root)
-    os.system(dir_Root + r"/Run.bat")
-else:
-    quit()
+try:
+    if restart == "y":
+        os.chdir(dir_Root)
+        os.system('Run.bat')
+    else:
+        quit()
+except Exception as e:
+    print(f"An error occurred: {e}")
+    with open("error_log.txt", "a") as log_file:
+        log_file.write(f"An error occurred: {e}\n")
