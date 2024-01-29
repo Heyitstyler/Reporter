@@ -44,7 +44,7 @@ proper = userRow["proper"]
 # Make the bar folder
     
 current_date = datetime.datetime.now()
-formatted_date = current_date.strftime('_%Y_%m_%d')
+formatted_date = current_date.strftime(' %Y-%m-%d')
 
 os.chdir(dir_Downloads)
 exists = os.path.exists(barSelect + formatted_date)
