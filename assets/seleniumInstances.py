@@ -1,12 +1,10 @@
 import os
 import time
-import subprocess
 import pandas as pd
 
 from selector import workingDir
 from selector import barSelect
 from selector import passwd
-#from selector import dlspeed
 
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
