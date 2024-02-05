@@ -1,5 +1,4 @@
 import os
-import time
 import pandas as pd
 import datetime
 from directory import *
@@ -25,20 +24,6 @@ while True:
 
 passwd = userRow["pass"]
 proper = userRow["proper"]
-
-# Select Download Speed
-# speed_Input = input("How fast is your internet? 1 - Fast, 2 - Average, 3 - Slow: ")
-
-# if speed_Input == '1':
-#     dlspeed = 20
-# elif speed_Input == '2':
-#     dlspeed = 25
-# elif speed_Input == '3':
-#     dlspeed = 30
-# else:
-#     print("Invalid Entry")
-#     time.sleep(5)
-#     exit()
 
 
 # Make the bar folder

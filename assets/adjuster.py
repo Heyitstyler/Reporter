@@ -1,26 +1,14 @@
-import reporter
 from selector import *
 from directory import *
 import pandas as pd
 import os
 import glob
 import xlwings as xw
-import time
-
-# Directory where your Excel files are located
-#directory = dir_BarFolder
-
-# Path to the folder where your VBA script or Personal Macro Workbook is located
-#vba_script_folder = dir_Scripts
 
 # Search for Excel files starting with "VarianceReport"
 def adjust():
     try:
         matching_files = glob.glob(os.path.join(dir_BarFolder, 'VarianceReport*.xlsx'))
-        # files_in_directory = os.listdir(dir_BarFolder)
-        # print(files_in_directory)
-        # matching_files = [file for file in files_in_directory if file.startswith('VarianceReport') and file.endswith('.xls')]
-        # matching_files = [os.path.join(dir_BarFolder, file) for file in matching_files]
         if matching_files:
             # Iterate through matching files
             for excel_file_path in matching_files:
@@ -69,13 +57,3 @@ def namer():
                 
                 os.rename(os.path.join(dir_BarFolder, filename), os.path.join(dir_BarFolder, new_filename))
                 print(f"Renamed '{filename}' to '{new_filename}'")
-
-
-# # Restart?
-# def restart():
-#     restart = input("Would you like to run another bar? (y/n)")
-#     if restart == "y":
-#         os.chdir(dir_Root)
-#         os.system(dir_Root + r"/reporter.bat")
-#     else:
-#         quit()
