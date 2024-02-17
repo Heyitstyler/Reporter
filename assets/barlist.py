@@ -14,6 +14,7 @@ EEGBARS = [
     ("HiFi", "hifi"),
     ("HiFi Tucson", "hifi tucson"),
     ("RnR", "rnr"),
+    ("Sandbar Gilbert", "sandbar gilbert"),
 ]
 
 PEDALBARS = [
