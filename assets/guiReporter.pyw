@@ -7,9 +7,13 @@ import queue
 import datetime
 import signal
 import pandas as pd
+import requests
 # from directory import *
 from barlist import *
 from tkinter import *
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, A4
 from PIL import ImageTk, Image
 import xlwings as xw
 
@@ -19,12 +23,77 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
+#Version
+version = "Reporter 1.7"
+
 #Directory
 dir_Assets = os.getcwd()
 os.chdir("..")
 dir_Root = os.getcwd()
 dir_Downloads = dir_Root + r"\_downloads"
 dir_DB = dir_Root + r"\DB"
+
+try:
+    checkint = requests.get("https://www.google.com", timeout=3)
+except:
+    print("Failed to determine download speed. do you have an internet")
+
+
+def download_file(url):
+
+    local_filename = url.split('/')[-1]
+    start = time.time()
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    end = time.time()
+    return end - start, local_filename
+
+
+def calculate_speed(download_time, file_size_mb):
+    # Speed in Mbps
+    speed_mbps = file_size_mb / download_time
+    os.remove("5MB.zip")
+    return speed_mbps * 8  # Convert MBps to Mbps
+
+# URL of the 10MB file
+file_url = 'http://ipv4.download.thinkbroadband.com/5MB.zip'
+file_size_mb = 10  # Size of the file in MB
+
+download_time, _ = download_file(file_url)
+download_speed_mbps = calculate_speed(download_time, file_size_mb)
+
+print(f"Download completed in {download_time:.2f} seconds.")
+print(f"Download speed: {download_speed_mbps:.2f} Mbps")
+
+download_time = round(download_time, 2)
+download_speed_mbps = round(download_speed_mbps, 2)
+loadTime = 1
+if download_time > 50:
+    loadTime = loadTime * 6
+elif download_time > 45:
+    loadTime = loadTime * 5
+elif download_time > 40:
+    loadTime = loadTime * 4
+elif download_time > 35:
+    loadTime = loadTime * 3
+elif download_time > 30:
+    loadTime = loadTime * 2
+
+os.chdir(dir_Root)
+log = open("dllog.txt", "a")
+L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
+log.writelines(L)
+log.close()
+
+
+
+def Updater():
+    return
+
+# Updater()
 
 #Root
 root = Tk()
@@ -47,21 +116,21 @@ report_Label.grid(row=0, column=2, pady=10)
 #Company Frame
 comp_Frame = LabelFrame(root)
 comp_Frame.pack_propagate(False)
-comp_Frame.config(height=390, width=200)
+comp_Frame.config(height=400, width=200)
 comp_Frame.grid(row=1, column=0, padx=30, pady=5)
 
 
 # Bars Frame
 bars_Frame = LabelFrame(root)
 bars_Frame.pack_propagate(False)
-bars_Frame.config(height=390, width=225)
-bars_Frame.grid(row=1, column=1, padx=15, pady=25)
+bars_Frame.config(height=400, width=225, pady=5)
+bars_Frame.grid(row=1, column=1, padx=15, pady=5)
 
 
 # Report Frame
 report_Frame = LabelFrame(root)
 report_Frame.grid_propagate(False)
-report_Frame.config(height=390, width=225)
+report_Frame.config(height=400, width=225)
 report_Frame.grid(row=1, column=2, padx=30, pady=5)
 
 
@@ -74,11 +143,15 @@ status = Label(report_Frame, text="Status: Ready")
 status.grid(row=1, column=0)
 
 # History Frame
-hist_Frame = LabelFrame(report_Frame)
-hist_Frame.config(height=20, width=200, text="History", labelanchor=N, font=('Arial', 12))
-hist_Frame.grid(row=2, column=0, padx=10, ipady=120)
-hist_Frame.grid_propagate(False)
-hist_Frame.pack_propagate(False)
+def history():
+    global hist_Frame
+    hist_Frame = LabelFrame(report_Frame)
+    hist_Frame.config(height=20, width=200, text="History", labelanchor=N, font=('Arial', 12))
+    hist_Frame.grid(row=2, column=0, padx=10, ipady=130)
+    hist_Frame.grid_propagate(False)
+    hist_Frame.pack_propagate(False)
+history()
+hist_Track = 0
 
 
 
@@ -88,13 +161,12 @@ def resetbg(button):
 
 
 def adjust(mode):
-    print(f"{mode} adjust")
     try:
         # For Windows
         os.system("taskkill /f /im excel.exe")
         print("Excel has been closed.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    except:
+        print(f"No Excel files to close.")
     try:
         matching_files = glob.glob(os.path.join(dir_BarFolder, 'VarianceReport*.xlsx'))
         if matching_files:
@@ -129,7 +201,6 @@ def adjust(mode):
 
 def namer(mode):
     global proper
-    print(f"{mode} namer")
     proper_str = proper.iloc[0] if isinstance(proper, pd.Series) else str(proper)  # Convert to string
 
     for filename in os.listdir(dir_BarFolder):
@@ -166,7 +237,7 @@ def on_company_click(button, mode):
 
 
 def on_bar_click(button, mode):
-    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, report1_button
+    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, report1_button, street, city, inv, price
     print(f"{mode} is selected")
     bars = pd.read_csv(dir_DB + "\\bardb.csv")
 
@@ -190,10 +261,12 @@ def on_bar_click(button, mode):
             # Code to proceed with the operation for the found username
             break  # Exit the loop when a valid username is found
 
-    passwd = userRow["pass"]
-    proper = userRow["proper"]
-
-    # Make the bar folder
+    passwd = userRow["pass"].iloc[0]
+    proper = userRow["proper"].iloc[0]
+    street = userRow["street"].iloc[0]
+    city = userRow["city"].iloc[0]
+    inv = userRow["invoicename"].iloc[0]
+    price = userRow["price"].iloc[0]
         
     
     for widget in bars_Frame.winfo_children():
@@ -212,11 +285,17 @@ def on_bar_click(button, mode):
 
 
 def run_report(button, mode):
-    global dir_BarFolder, workingDir
+    global dir_BarFolder, workingDir, loadTime, hist_Track
+    time1 = time.perf_counter()
+    if hist_Track >= 3:
+        hist_Frame.forget()
+        hist_Track = 0
+        history()
+    hist_Track = hist_Track + 1
     status.config(text="Status: Running")
     report1_button.config(bg="yellow", state=DISABLED)
     root.update()
-    print(f"{mode} is selected in reporter")
+    print(f"Running reports for {mode}")
 
     current_date = datetime.datetime.now()
     formatted_date = current_date.strftime(' %Y-%m-%d')
@@ -274,6 +353,17 @@ def run_report(button, mode):
     t5 = threading.Thread(target=namer, kwargs={'mode': mode})
     t5.start()
     t5.join()
+
+    t6 = threading.Thread(target=Invoice)
+    t6.start()
+    t6.join()
+    inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
+    inv_hist.pack()
+
+    time2 = time.perf_counter()
+
+    print(f"Ran Reporter in {time2 - time1:0.2f} seconds.")
+
     report1_button.config(bg="lime", state=NORMAL)
     status.config(text="Status: Ready")
     # subprocess.run(["init.bat", selected], shell=True)
@@ -293,7 +383,7 @@ def bars_EEG():
     for text, mode in EEGBARS:
         button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
         button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=5)
+        button.pack(pady=2)
 
 def bars_PEDAL():
     for text, mode in PEDALBARS:
@@ -322,6 +412,7 @@ def bars_INDEPENDANT():
 def dlSummary(mode):
     global sum_e
     try:
+        sum_e = "Failed"
         os.chdir(dir_BarFolder)
         keyword = 'Summary'
         options = Options()
@@ -343,17 +434,17 @@ def dlSummary(mode):
         login_button = summary_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(0.5)
+        time.sleep(loadTime)
 
         navigate_summary = summary_driver.find_element(By.ID, 'inventoriesButton')
         navigate_summary.click()
-        time.sleep(0.5)
+        time.sleep(loadTime)
         full_summary = summary_driver.find_element(By.XPATH, '/html/body/div/div[4]/div/div[3]/div[2]/table/tbody/tr[1]/td[1]/a[1]')
         full_summary.click()
-        time.sleep(1)
+        time.sleep(loadTime)
         dropdown_summary = summary_driver.find_element(By.XPATH, '//*[@id="dropdownMenu1"]')
         dropdown_summary.click()
-        time.sleep(0.5)
+        time.sleep(loadTime/2)
         download_summary = summary_driver.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/ul/li[1]/a')
         download_summary.click()
 
@@ -365,17 +456,23 @@ def dlSummary(mode):
             for file in files:
                 if file.startswith(keyword) and not file.endswith(".part"):
                     print(f"Found file: {file}")
-                    sum_e = (f"{mode} Summary report")
+                    sum_e = (f"{proper} Summary report")
                     time.sleep(1)
                     summary_driver.close()
                     time.sleep(0.5)
                     summary_driver.quit()
                     return
-    except Exception as sum_e:
+                
+    except:
         sum_e = ("Error Collecting Summary Report")
         summary_driver.close()
         time.sleep(1)
         summary_driver.quit()
+        os.chdir(dir_Root)
+        log = open("dllog.txt", "a")
+        L = [f"Failed Summary Report\n"]
+        log.writelines(L)
+        log.close()
         return
                 
             
@@ -403,30 +500,30 @@ def dlUsage(mode):
         login_button = usage_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(0.5)
+        time.sleep(loadTime)
 
         navigate_reports = usage_driver.find_element(By.ID, 'reportsButton')
         navigate_reports.click()
         navigate_Usage = usage_driver.find_element(By.ID, "usageReportButton")
         navigate_Usage.click()
 
-        time.sleep(1)
+        time.sleep(loadTime)
 
         use_start_date_drop = usage_driver.find_element(By.ID, "startInventoryId")
         use_start_date_drop.click()
-        time.sleep(0.5)
+        time.sleep(loadTime/2)
         use_start_date_select = usage_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
         use_start_date_select.click()
         use_end_date_drop = usage_driver.find_element(By.ID, "endInventoryId")
         use_end_date_drop.click()
-        time.sleep(0.5)
+        time.sleep(loadTime/2)
         use_end_date_select = usage_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
         use_end_date_select.click()
-        time.sleep(0.5)
+        time.sleep(loadTime/2)
 
         run_js = 'runReport()'
         usage_driver.execute_script(run_js)
-        time.sleep(4)
+        time.sleep(loadTime*4)
         download_js = 'downloadReport()'
         usage_driver.execute_script(download_js)
 
@@ -438,7 +535,7 @@ def dlUsage(mode):
             for file in files:
                 if file.startswith(keyword) and not file.endswith(".part"):
                     print(f"Found file: {file}")
-                    use_e = (f"{mode} Usage Report")
+                    use_e = (f"{proper} Usage Report")
                     time.sleep(1)
                     usage_driver.close()
                     time.sleep(0.5)
@@ -449,6 +546,11 @@ def dlUsage(mode):
         usage_driver.close()
         time.sleep(1)
         usage_driver.quit()
+        os.chdir(dir_Root)
+        log = open("dllog.txt", "a")
+        L = [f"Failed Usage Report\n"]
+        log.writelines(L)
+        log.close()
 
 
 
@@ -474,30 +576,30 @@ def dlVar(mode):
         login_button = variance_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(0.5)
+        time.sleep(loadTime)
 
         navigate_reports = variance_driver.find_element(By.ID, 'reportsButton')
         navigate_reports.click()
         navigate_Variance = variance_driver.find_element(By.ID, "varianceReportButton")
         navigate_Variance.click()
 
-        time.sleep(1)
+        time.sleep(loadTime)
 
         var_start_date_drop = variance_driver.find_element(By.ID, "startInventoryId")
         var_start_date_drop.click()
-        time.sleep(.5)
+        time.sleep(loadTime/2)
         var_start_date_select = variance_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
         var_start_date_select.click()
         var_end_date_drop = variance_driver.find_element(By.ID, "endInventoryId")
         var_end_date_drop.click()
-        time.sleep(.5)
+        time.sleep(loadTime/2)
         var_end_date_select = variance_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
         var_end_date_select.click()
-        time.sleep(.5)
+        time.sleep(loadTime/2)
 
         run_js = 'runReport()'
         variance_driver.execute_script(run_js)
-        time.sleep(4)
+        time.sleep(loadTime*4)
         download_js = 'downloadReport()'
         variance_driver.execute_script(download_js)
 
@@ -509,7 +611,7 @@ def dlVar(mode):
             for file in files:
                 if file.startswith(keyword) and not file.endswith(".part"):
                     print(f"Found file: {file}")
-                    var_e = (f"{mode} Variance Report")
+                    var_e = (f"{proper} Variance Report")
                     time.sleep(1)
                     variance_driver.close()
                     time.sleep(0.5)
@@ -520,6 +622,64 @@ def dlVar(mode):
         variance_driver.close()
         time.sleep(1)
         variance_driver.quit()
+        os.chdir(dir_Root)
+        log = open("dllog.txt", "a")
+        L = [f"Failed Variance Report\n"]
+        log.writelines(L)
+        log.close()
 
+def Invoice():
+    os.chdir(dir_BarFolder)
+    today = datetime.datetime.now()
+    c = canvas.Canvas(f"{proper} invoice {today:%Y-%m-%d}.pdf", pagesize=letter)
+
+    # Set font size, color, and spacing
+    font_size = 12
+    marginleft = 70
+    spacey = 17
+
+    # Service Provider Information
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColorRGB(7/255, 55/255, 99/255)  # Setting text color to black
+    c.drawString(marginleft, 720 - spacey, "GDS Consulting LLC")
+    c.setFont("Helvetica", font_size)
+    c.setFillColor("black")  # Setting text color to black
+    c.drawString(marginleft, 720 - spacey*2, "3650 South Joshua Tree Lane")
+    c.drawString(marginleft, 720 - spacey*3, "Gilbert, Arizona 85297")
+    c.drawString(marginleft, 720 - spacey*4, "Phone - (480) 593-0573")
+    c.drawString(marginleft, 720 - spacey*5, "Email - GDSConsultingllc@gmail.com")
+
+    # Client Information
+    c.setFillColorRGB(7/255, 55/255, 99/255)  # Setting text color to black
+    c.drawString(marginleft, 610 - spacey*2, "BILLED TO")
+    c.setFont("Helvetica-Bold", font_size)
+    c.setFillColor("black")  # Setting text color to black
+    c.drawString(marginleft, 610 - spacey*3, f"{proper}")
+    c.drawString(marginleft, 610 - spacey*4, f"{street}")
+    c.drawString(marginleft, 610 - spacey*5, f"{city}")
+
+    # Invoice Details
+    c.setFont("Helvetica-Bold", 24)
+    c.setFillColorRGB(7/255, 55/255, 99/255)  # Setting text color to blue
+    c.drawString(marginleft, 570 - spacey*7, "Invoice")
+    c.setFont("Helvetica", font_size)
+    c.setFillColor("black")  # Setting text color to black
+    c.drawString(marginleft, 570 - spacey*8.2, f"Invoice #{inv}:{today:%m%d%Y}")
+    c.drawString(marginleft, 570 - spacey*9.2, f"{today:%m/%d/%Y}")
+    c.drawString(marginleft + 10, 570 - spacey*12, "Description")
+    c.drawString(marginleft + 440, 570 - spacey*12, "Total")
+    c.setFont("Helvetica-Bold", font_size)
+    c.drawString(marginleft + 10, 570 - spacey*13.5, "Audit & Consultation")
+    c.drawString(marginleft + 425, 570 - spacey*13.5, f"${price}.00")
+    c.line(marginleft, 570 - spacey*15, marginleft + 480, 570 - spacey*15)
+    c.drawString(marginleft + 280, 570 - spacey*17, "Total")
+    c.drawString(marginleft + 430, 570 - spacey*17, f"${price}.00")
+    c.setFillColorRGB(207/255, 226/255, 243/255)
+    c.rect(marginleft + 275, 566 - spacey*19, 200, 16, stroke=0, fill=1)
+    c.setFillColor("black")
+    c.drawString(marginleft + 280, 570 - spacey*19, "Amount Due")
+    c.drawString(marginleft + 430, 570 - spacey*19, f"${price}.00")
+
+    c.save()
 
 root.mainloop()
