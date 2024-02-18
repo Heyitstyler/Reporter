@@ -407,7 +407,7 @@ def bars_INDEPENDANT():
     for text, mode in INDEPENDANTBARS:
         button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
         button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=5)
+        button.pack(pady=3)
 
 def dlSummary(mode):
     global sum_e
