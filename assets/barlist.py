@@ -47,6 +47,7 @@ INDEPENDANTBARS = [
     ("Beverly", "beverly"),
     ("Club 2301", "club 23"),
     ("Handlebar", "handlebar"),
+    ("Hob Nob", "hobnob"),
     ("Luckys", "luckys"),
     ("Bones", "bones"),
     ("Skin", "skin"),
