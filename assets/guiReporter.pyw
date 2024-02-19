@@ -97,7 +97,7 @@ def Updater():
 
 #Root
 root = Tk()
-root.geometry("800x500")
+root.geometry("800x525")
 root.title("Reporter")
 root.resizable(False, False)
 message_queue = queue.Queue()
@@ -116,38 +116,48 @@ report_Label.grid(row=0, column=2, pady=10)
 #Company Frame
 comp_Frame = LabelFrame(root)
 comp_Frame.pack_propagate(False)
-comp_Frame.config(height=400, width=200)
+comp_Frame.config(height=425, width=200)
 comp_Frame.grid(row=1, column=0, padx=30, pady=5)
 
 
 # Bars Frame
 bars_Frame = LabelFrame(root)
 bars_Frame.pack_propagate(False)
-bars_Frame.config(height=400, width=225, pady=5)
+bars_Frame.config(height=425, width=225, pady=5)
 bars_Frame.grid(row=1, column=1, padx=15, pady=5)
 
 
 # Report Frame
 report_Frame = LabelFrame(root)
 report_Frame.grid_propagate(False)
-report_Frame.config(height=400, width=225)
+report_Frame.config(height=425, width=226)
 report_Frame.grid(row=1, column=2, padx=30, pady=5)
 
 
 # Sub-Report Frames
 report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=5, state=DISABLED, anchor=N)
-report_button.grid(row=0, column=0, pady=15)
+report_button.grid(row=0, column=0, pady=15, columnspan=3)
 
+rpt = IntVar()
+rpt.set(1)
+
+reportTypeFull = Radiobutton(report_Frame, text="Full", variable=rpt, value=1)
+reportTypeReport = Radiobutton(report_Frame, text="Just Report", variable=rpt, value=2)
+reportTypeInvoice = Radiobutton(report_Frame, text="Just Invoice", variable=rpt, value=3)
+
+reportTypeFull.grid(row=1, column=0)
+reportTypeReport.grid(row=1, column=1)
+reportTypeInvoice.grid(row=1, column=2)
 
 status = Label(report_Frame, text="Status: Ready")
-status.grid(row=1, column=0)
+status.grid(row=2, column=0, columnspan=3)
 
 # History Frame
 def history():
     global hist_Frame
     hist_Frame = LabelFrame(report_Frame)
     hist_Frame.config(height=20, width=200, text="History", labelanchor=N, font=('Arial', 12))
-    hist_Frame.grid(row=2, column=0, padx=10, ipady=130)
+    hist_Frame.grid(row=3, column=0, padx=10, ipady=130, columnspan=3)
     hist_Frame.grid_propagate(False)
     hist_Frame.pack_propagate(False)
 history()
@@ -255,11 +265,9 @@ def on_bar_click(button, mode):
 
         if userRow.empty:
             print("Username not found. Please try again.")
-            # Optional: You might want to add a condition to break the loop after several attempts
-            continue  # This will cause the loop to start over again
+            continue
         else:
-            # Code to proceed with the operation for the found username
-            break  # Exit the loop when a valid username is found
+            break
 
     passwd = userRow["pass"].iloc[0]
     proper = userRow["proper"].iloc[0]
@@ -274,11 +282,11 @@ def on_bar_click(button, mode):
     # for widget in report_Frame.winfo_children():
     #     widget.destroy()
     button.configure(bg="dark grey")
-    report_button.forget()
-    report_Frame.update()
-    report1_button = Button(report_Frame, text="Run Report", background="green", activebackground="yellow", font=("Arial", 16), pady=5)
-    report1_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
-    report1_button.grid(row=0, column=0, pady=15)
+    report_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
+    # report_Frame.update()
+    # report1_button = Button(report_Frame, text="Run Report", background="green", activebackground="yellow", font=("Arial", 16), pady=5)
+    # report1_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
+    # report1_button.grid(row=0, column=0, pady=15)
     report_Frame.update()
 
 
@@ -287,13 +295,9 @@ def on_bar_click(button, mode):
 def run_report(button, mode):
     global dir_BarFolder, workingDir, loadTime, hist_Track
     time1 = time.perf_counter()
-    if hist_Track >= 3:
-        hist_Frame.forget()
-        hist_Track = 0
-        history()
-    hist_Track = hist_Track + 1
+
     status.config(text="Status: Running")
-    report1_button.config(bg="yellow", state=DISABLED)
+    report_button.config(bg="yellow", state=DISABLED)
     root.update()
     print(f"Running reports for {mode}")
 
@@ -310,64 +314,148 @@ def run_report(button, mode):
     os.chdir(dir_BarFolder)
     workingDir = os.getcwd()
 
-    t1 = threading.Thread(target=dlSummary, kwargs={'mode': mode})
-    cwd = os.getcwd()
-    print(cwd)
-    t1.start()
+    rptOption = rpt.get()
+
+    if rptOption == 1:
+
+        if hist_Track >= 9:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+            
+
+        hist_Track = hist_Track + 4
+        t1 = threading.Thread(target=dlSummary, kwargs={'mode': mode})
+        cwd = os.getcwd()
+        print(cwd)
+        t1.start()
 
 
-    t2 = threading.Thread(target=dlUsage, kwargs={'mode': mode})
-    t2.start()
+        t2 = threading.Thread(target=dlUsage, kwargs={'mode': mode})
+        t2.start()
 
 
-    t3 = threading.Thread(target=dlVar, kwargs={'mode': mode})
-    t3.start()
+        t3 = threading.Thread(target=dlVar, kwargs={'mode': mode})
+        t3.start()
 
 
-    t1.join() 
-    sum_hist = Label(hist_Frame, text=f"{sum_e}")
-    sum_hist.pack() 
-    root.update()
+        t1.join() 
+        sum_hist = Label(hist_Frame, text=f"{sum_e}")
+        sum_hist.pack() 
+        root.update()
 
-    t2.join()
-    use_hist = Label(hist_Frame, text=f"{use_e}")
-    use_hist.pack()
-    root.update()
+        t2.join()
+        use_hist = Label(hist_Frame, text=f"{use_e}")
+        use_hist.pack()
+        root.update()
 
-    t3.join()
-    var_hist = Label(hist_Frame, text=f"{var_e}")
-    var_hist.pack()
-    root.update()
-
-
+        t3.join()
+        var_hist = Label(hist_Frame, text=f"{var_e}")
+        var_hist.pack()
+        root.update()
 
 
+        t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
+        t4.start()
+        t4.join()
 
 
+        t5 = threading.Thread(target=namer, kwargs={'mode': mode})
+        t5.start()
+        t5.join()
 
-    t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
-    t4.start()
-    t4.join()
+        t6 = threading.Thread(target=Invoice)
+        t6.start()
+        t6.join()
+        inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
+        inv_hist.pack()
+
+        time2 = time.perf_counter()
+
+        print(f"Ran Reporter in {time2 - time1:0.2f} seconds.")
+
+        report_button.config(bg="lime", state=NORMAL)
+        status.config(text="Status: Ready")
+
+    elif rptOption == 2:
+
+        if hist_Track >= 10:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+
+        hist_Track = hist_Track + 3
+    
+        t1 = threading.Thread(target=dlSummary, kwargs={'mode': mode})
+        cwd = os.getcwd()
+        print(cwd)
+        t1.start()
 
 
-    t5 = threading.Thread(target=namer, kwargs={'mode': mode})
-    t5.start()
-    t5.join()
+        t2 = threading.Thread(target=dlUsage, kwargs={'mode': mode})
+        t2.start()
 
-    t6 = threading.Thread(target=Invoice)
-    t6.start()
-    t6.join()
-    inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
-    inv_hist.pack()
 
-    time2 = time.perf_counter()
+        t3 = threading.Thread(target=dlVar, kwargs={'mode': mode})
+        t3.start()
 
-    print(f"Ran Reporter in {time2 - time1:0.2f} seconds.")
 
-    report1_button.config(bg="lime", state=NORMAL)
-    status.config(text="Status: Ready")
-    # subprocess.run(["init.bat", selected], shell=True)
+        t1.join() 
+        sum_hist = Label(hist_Frame, text=f"{sum_e}")
+        sum_hist.pack() 
+        root.update()
 
+        t2.join()
+        use_hist = Label(hist_Frame, text=f"{use_e}")
+        use_hist.pack()
+        root.update()
+
+        t3.join()
+        var_hist = Label(hist_Frame, text=f"{var_e}")
+        var_hist.pack()
+        root.update()
+
+
+        t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
+        t4.start()
+        t4.join()
+
+
+        t5 = threading.Thread(target=namer, kwargs={'mode': mode})
+        t5.start()
+        t5.join()
+
+        time2 = time.perf_counter()
+
+        print(f"Downloaded reports in {time2 - time1:0.2f} seconds.")
+
+        report_button.config(bg="lime", state=NORMAL)
+        status.config(text="Status: Ready")
+
+    elif rptOption == 3:
+
+        if hist_Track >= 12:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+
+        hist_Track = hist_Track + 1
+
+        t6 = threading.Thread(target=Invoice)
+        t6.start()
+        t6.join()
+        inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
+        inv_hist.pack()
+
+        time2 = time.perf_counter()
+
+        print(f"Generated Invoice in {time2 - time1:0.2f} seconds.")
+
+        report_button.config(bg="lime", state=NORMAL)
+        status.config(text="Status: Ready")
 
 
 
