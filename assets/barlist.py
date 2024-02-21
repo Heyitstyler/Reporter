@@ -10,7 +10,7 @@ EEGBARS = [
     ("Bevvy", "bevvy"),
     ("Bottled Blonde", "bottled"),
     ("Casa Amigos", "casa amigos"),
-    ("Chaunceys", "chaunceys"),
+    #("Chaunceys", "chaunceys"),
     ("HiFi", "hifi"),
     ("HiFi Tucson", "hifi tucson"),
     ("RnR", "rnr"),
