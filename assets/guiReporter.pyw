@@ -197,13 +197,13 @@ update_menu.add_command(label="Update Bar Database", command = lambda:updateDB()
 update_menu.add_command(label="Update Reporter", command = lambda:updateRep())
 
 #Top Labels
-comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 24))
+comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 12), wraplength=1)
 comp_Label.grid(row=0, column=0, pady=10)
 
-bars_Label = Label(root, text="Bars", background="light blue", width=10, pady=10, font=('Arial', 24))
+bars_Label = Label(root, text="Bars", background="pink", width=10, pady=10, font=('Arial', 24))
 bars_Label.grid(row=0, column=1, pady=10)
 
-report_Label = Label(root, text="Reporter", background="light blue", width=10, pady=10, font=('Arial', 24))
+report_Label = Label(root, text="Reporter", background="lime", width=10, pady=10, font=('Arial', 24))
 report_Label.grid(row=0, column=2, pady=10)
 
 
@@ -235,13 +235,13 @@ report_button.grid(row=0, column=0, pady=15, columnspan=3)
 rpt = IntVar()
 rpt.set(1)
 
-reportTypeFull = Radiobutton(report_Frame, text="Full", variable=rpt, value=1)
-reportTypeReport = Radiobutton(report_Frame, text="Just Report", variable=rpt, value=2)
-reportTypeInvoice = Radiobutton(report_Frame, text="Just Invoice", variable=rpt, value=3)
+# reportTypeFull = Radiobutton(report_Frame, text="Full", variable=rpt, value=1)
+# reportTypeReport = Radiobutton(report_Frame, text="Just Report", variable=rpt, value=2)
+# reportTypeInvoice = Radiobutton(report_Frame, text="Just Invoice", variable=rpt, value=3)
 
-reportTypeFull.grid(row=1, column=0)
-reportTypeReport.grid(row=1, column=1)
-reportTypeInvoice.grid(row=1, column=2)
+# reportTypeFull.grid(row=1, column=0)
+# reportTypeReport.grid(row=1, column=1)
+# reportTypeInvoice.grid(row=1, column=2)
 
 status = Label(report_Frame, text="Status: Ready")
 status.grid(row=2, column=0, columnspan=3)
@@ -549,9 +549,9 @@ def run_report(button, mode):
 
 #Company List
 for text, mode in COMPANIES:
-    button = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16))
+    button = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16), padx=25)
     button.config(command=lambda button=button, mode=mode:[on_company_click(button, mode)])
-    button.pack(pady=15)
+    button.pack(pady=15, anchor=W)
 
 
 #Bars Lists
@@ -570,7 +570,7 @@ def bars_PEDAL():
 def bars_PORCH():
     for text, mode in PORCHBARS:
         button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
+        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode), justify=RIGHT)
         button.pack(pady=5)
 
 def bars_BABBOS():
