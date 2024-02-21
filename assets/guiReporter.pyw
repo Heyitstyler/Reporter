@@ -149,6 +149,37 @@ def updateDB():
         Label(hist_Frame, text="Error downloading new barlist.py").pack()
         hist_Track = hist_Track + 1
 
+
+def updateRep():
+    global hist_Track
+    repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/guiReporter.pyw"
+    try:
+        os.chdir(dir_Assets)
+        requests.get(repURL, timeout=5)
+        try:
+            os.remove("guiReporter.backup.py")
+        except:
+            print("no backup Reporter")
+        os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
+        download_file(repURL)
+        print("Downloaded New Reporter")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Downloaded new Reporter").pack()
+        hist_Track = hist_Track + 1
+    except Exception as e:
+        print(f"error downloading new Reporter {e}")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Error downloading new Reporter").pack()
+        hist_Track = hist_Track + 1
+
 #Root
 root = Tk()
 root.geometry("800x525")
@@ -163,6 +194,7 @@ root.config(menu=topMenu)
 update_menu = Menu(topMenu)
 topMenu.add_cascade(label="Update", menu=update_menu)
 update_menu.add_command(label="Update Bar Database", command = lambda:updateDB())
+update_menu.add_command(label="Update Reporter", command = lambda:updateRep())
 
 #Top Labels
 comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 24))
