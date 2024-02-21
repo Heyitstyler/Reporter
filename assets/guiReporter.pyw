@@ -157,7 +157,7 @@ def updateRep():
         os.chdir(dir_Assets)
         requests.get(repURL, timeout=5)
         try:
-            os.remove("guiReporter.backup.py")
+            os.remove("guiReporter.backup.pyw")
         except:
             print("no backup Reporter")
         os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
