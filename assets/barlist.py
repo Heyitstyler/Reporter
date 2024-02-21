@@ -10,7 +10,7 @@ EEGBARS = [
     ("Bevvy", "bevvy"),
     ("Bottled Blonde", "bottled"),
     ("Casa Amigos", "casa amigos"),
-    #("Chaunceys", "chaunceys"),
+    ("Chaunceys", "chaunceys"),
     ("HiFi", "hifi"),
     ("HiFi Tucson", "hifi tucson"),
     ("RnR", "rnr"),
@@ -29,6 +29,7 @@ PORCHBARS = [
     ("Porch Arcadia", "porch"),
     ("Porch Gilbert", "porch gilbert"),
     ("Porch Tempe", "porch tempe"),
+    ("fake bar1", "fakebar1"),
 ]
 
 BABBOSBARS = [
