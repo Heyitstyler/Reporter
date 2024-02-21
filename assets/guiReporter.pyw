@@ -25,6 +25,7 @@ from selenium.webdriver.common.by import By
 
 #Version
 version = "Reporter 1.7"
+hist_Track = 0
 
 #Directory
 dir_Assets = os.getcwd()
@@ -89,11 +90,64 @@ log.writelines(L)
 log.close()
 
 
-
-def Updater():
-    return
-
-# Updater()
+#Update DB
+def updateDB():
+    global hist_Track
+    listpyURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/barlist.py"
+    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/DB/bardb.csv"
+    try:
+        os.chdir(dir_DB)
+        requests.get(csvURL, timeout=5)
+        try:
+            os.remove("bardb.backup.csv")
+        except:
+            print("no backup bardb")
+        os.rename("bardb.csv", "bardb.backup.csv")
+        download_file(csvURL)
+        print("Downloaded New bardb.csv")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Downloaded new bardb.csv").pack()
+        hist_Track = hist_Track + 1
+    except:
+        print("error downloading new bardb.csv")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Error downloading new bardb.csv").pack()
+        hist_Track = hist_Track + 1
+    
+    try:
+        os.chdir(dir_Assets)
+        requests.get(listpyURL, timeout=5)
+        try:
+            os.remove("barlist.backup.py")
+        except:
+            print("no backup barlist")
+        os.rename("barlist.py", "barlist.backup.py")
+        download_file(listpyURL)
+        print("Downloaded New barlist.py")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Downloaded New barlist.py").pack()
+        hist_Track = hist_Track + 1
+    except:
+        print("error downloading new barlist.py")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Error downloading new barlist.py").pack()
+        hist_Track = hist_Track + 1
 
 #Root
 root = Tk()
@@ -101,6 +155,14 @@ root.geometry("800x525")
 root.title("Reporter")
 root.resizable(False, False)
 message_queue = queue.Queue()
+
+#top menu
+topMenu = Menu(root)
+root.config(menu=topMenu)
+
+update_menu = Menu(topMenu)
+topMenu.add_cascade(label="Update", menu=update_menu)
+update_menu.add_command(label="Update Bar Database", command = lambda:updateDB())
 
 #Top Labels
 comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 24))
@@ -161,7 +223,7 @@ def history():
     hist_Frame.grid_propagate(False)
     hist_Frame.pack_propagate(False)
 history()
-hist_Track = 0
+
 
 
 
@@ -279,14 +341,8 @@ def on_bar_click(button, mode):
     
     for widget in bars_Frame.winfo_children():
         widget.configure(bg="light grey")
-    # for widget in report_Frame.winfo_children():
-    #     widget.destroy()
     button.configure(bg="dark grey")
     report_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
-    # report_Frame.update()
-    # report1_button = Button(report_Frame, text="Run Report", background="green", activebackground="yellow", font=("Arial", 16), pady=5)
-    # report1_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
-    # report1_button.grid(row=0, column=0, pady=15)
     report_Frame.update()
 
 
