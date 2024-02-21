@@ -29,7 +29,6 @@ PORCHBARS = [
     ("Porch Arcadia", "porch"),
     ("Porch Gilbert", "porch gilbert"),
     ("Porch Tempe", "porch tempe"),
-    ("fake bar1", "fakebar1"),
 ]
 
 BABBOSBARS = [
