@@ -8,15 +8,14 @@ import datetime
 import signal
 import pandas as pd
 import requests
-# from directory import *
+import xlwings as xw
+from shutil import copyfile
 from barlist import *
 from tkinter import *
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from PIL import ImageTk, Image
-import xlwings as xw
-
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -24,7 +23,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "Reporter 1.7"
+version = "Reporter 1.9"
 hist_Track = 0
 
 #Directory
@@ -34,11 +33,18 @@ dir_Root = os.getcwd()
 dir_Downloads = dir_Root + r"\_downloads"
 dir_DB = dir_Root + r"\DB"
 
+# Initial internet check
 try:
     checkint = requests.get("https://www.google.com", timeout=3)
 except:
     print("Failed to determine download speed. do you have an internet")
 
+
+# Determine internet speed
+    
+# URL of the 5MB file
+file_url = 'http://ipv4.download.thinkbroadband.com/5MB.zip'
+file_size_mb = 5
 
 def download_file(url):
 
@@ -52,16 +58,10 @@ def download_file(url):
     end = time.time()
     return end - start, local_filename
 
-
 def calculate_speed(download_time, file_size_mb):
-    # Speed in Mbps
     speed_mbps = file_size_mb / download_time
     os.remove("5MB.zip")
-    return speed_mbps * 8  # Convert MBps to Mbps
-
-# URL of the 10MB file
-file_url = 'http://ipv4.download.thinkbroadband.com/5MB.zip'
-file_size_mb = 10  # Size of the file in MB
+    return speed_mbps * 8
 
 download_time, _ = download_file(file_url)
 download_speed_mbps = calculate_speed(download_time, file_size_mb)
@@ -83,6 +83,7 @@ elif download_time > 35:
 elif download_time > 30:
     loadTime = loadTime * 2
 
+# Save to download log
 os.chdir(dir_Root)
 log = open("dllog.txt", "a")
 L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
@@ -90,7 +91,7 @@ log.writelines(L)
 log.close()
 
 
-#Update DB
+# Update DB
 def updateDB():
     global hist_Track
     listpyURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/barlist.py"
@@ -101,7 +102,7 @@ def updateDB():
         try:
             os.remove("bardb.backup.csv")
         except:
-            print("no backup bardb")
+            print("No backup bardb")
         os.rename("bardb.csv", "bardb.backup.csv")
         download_file(csvURL)
         print("Downloaded New bardb.csv")
@@ -113,7 +114,7 @@ def updateDB():
         Label(hist_Frame, text="Downloaded new bardb.csv").pack()
         hist_Track = hist_Track + 1
     except:
-        print("error downloading new bardb.csv")
+        print("Error downloading new bardb.csv")
         if hist_Track >= 11:
             hist_Frame.forget()
             hist_Track = 0
@@ -149,7 +150,6 @@ def updateDB():
         Label(hist_Frame, text="Error downloading new barlist.py").pack()
         hist_Track = hist_Track + 1
 
-
 def updateRep():
     global hist_Track
     repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/guiReporter.pyw"
@@ -159,7 +159,7 @@ def updateRep():
         try:
             os.remove("guiReporter.backup.pyw")
         except:
-            print("no backup Reporter")
+            print("No backup Reporter")
         os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
         download_file(repURL)
         print("Downloaded New Reporter")
@@ -171,7 +171,7 @@ def updateRep():
         Label(hist_Frame, text="Downloaded new Reporter").pack()
         hist_Track = hist_Track + 1
     except Exception as e:
-        print(f"error downloading new Reporter {e}")
+        print(f"Error downloading new Reporter {e}")
         if hist_Track >= 11:
             hist_Frame.forget()
             hist_Track = 0
@@ -180,58 +180,85 @@ def updateRep():
         Label(hist_Frame, text="Error downloading new Reporter").pack()
         hist_Track = hist_Track + 1
 
-#Root
+def updateMacro():
+    global hist_Track
+    MacroURL = "https://github.com/Heyitstyler/Reporter/raw/main/assets/macroBook.xlsm"
+    try:
+        os.chdir(dir_Assets)
+        requests.get(MacroURL, timeout=5)
+        try:
+            os.remove("macroBook.backup.xlsm")
+        except:
+            print("No backup Macro Book")
+        os.rename("macroBook.xlsm", "macroBook.backup.xlsm")
+        download_file(MacroURL)
+        print("Downloaded New Macro Book")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Downloaded new Macro Book").pack()
+        hist_Track = hist_Track + 1
+    except Exception as e:
+        print(f"Error downloading new Macro Book {e}")
+        if hist_Track >= 11:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+        Label(hist_Frame, text="Error downloading new Macro Book").pack()
+        hist_Track = hist_Track + 1
+
+
+# Root
 root = Tk()
-root.geometry("800x525")
+root.geometry("800x530")
 root.title("Reporter")
 root.resizable(False, False)
 message_queue = queue.Queue()
 
-#top menu
-topMenu = Menu(root)
-root.config(menu=topMenu)
 
-update_menu = Menu(topMenu)
-topMenu.add_cascade(label="Update", menu=update_menu)
-update_menu.add_command(label="Update Bar Database", command = lambda:updateDB())
-update_menu.add_command(label="Update Reporter", command = lambda:updateRep())
-
-#Top Labels
+# Top Labels
 comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 24))
-comp_Label.grid(row=0, column=0, pady=10)
+comp_Label.grid(row=0, column=0, pady=8)
 
 bars_Label = Label(root, text="Bars", background="light blue", width=10, pady=10, font=('Arial', 24))
-bars_Label.grid(row=0, column=1, pady=10)
+bars_Label.grid(row=0, column=1, pady=8)
 
 report_Label = Label(root, text="Reporter", background="light blue", width=10, pady=10, font=('Arial', 24))
-report_Label.grid(row=0, column=2, pady=10)
+report_Label.grid(row=0, column=2, pady=8)
 
 
-#Company Frame
+# Company Frame
 comp_Frame = LabelFrame(root)
 comp_Frame.pack_propagate(False)
-comp_Frame.config(height=425, width=200)
+comp_Frame.config(height=440, width=200)
 comp_Frame.grid(row=1, column=0, padx=30, pady=5)
 
 
 # Bars Frame
 bars_Frame = LabelFrame(root)
 bars_Frame.pack_propagate(False)
-bars_Frame.config(height=425, width=225, pady=5)
+bars_Frame.config(height=440, width=225, pady=5)
 bars_Frame.grid(row=1, column=1, padx=15, pady=5)
 
 
 # Report Frame
 report_Frame = LabelFrame(root)
 report_Frame.grid_propagate(False)
-report_Frame.config(height=425, width=226)
+report_Frame.config(height=440, width=226)
 report_Frame.grid(row=1, column=2, padx=30, pady=5)
 
 
 # Sub-Report Frames
-report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=5, state=DISABLED, anchor=N)
-report_button.grid(row=0, column=0, pady=15, columnspan=3)
+report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=8, state=DISABLED, anchor=N)
+report_button.grid(row=0, column=0, pady=8, columnspan=3)
 
+folder_Button = Button(report_Frame, text="Open Downloads Folder", bg="light grey", font=("Arial", 12), pady=3, anchor=N, command=lambda:os.startfile(dir_Downloads))
+folder_Button.grid(row=4, column=0, columnspan=3)
+
+# Download type selector
 rpt = IntVar()
 rpt.set(1)
 
@@ -243,85 +270,43 @@ reportTypeFull.grid(row=1, column=0)
 reportTypeReport.grid(row=1, column=1)
 reportTypeInvoice.grid(row=1, column=2)
 
+# Status
 status = Label(report_Frame, text="Status: Ready")
 status.grid(row=2, column=0, columnspan=3)
+
+# Top menu
+topMenu = Menu(root)
+root.config(menu=topMenu)
+
+update_menu = Menu(topMenu)
+topMenu.add_cascade(label="Update", menu=update_menu)
+update_menu.add_command(label="Update Bar Database", command = lambda:updateDB())
+update_menu.add_command(label="Update Reporter", command = lambda:updateRep())
+update_menu.add_command(label="Update Macro Book", command = lambda:updateMacro())
+
+genOrder = IntVar()
+genOrder.set(0)
+order_Option = genOrder.get()
+
+optional_Menu = Menu(topMenu)
+topMenu.add_cascade(label='Optional', menu=optional_Menu)
+optional_Menu.add_checkbutton(label="Generate Order Report", variable=genOrder, onvalue=1, offvalue=0)
+
 
 # History Frame
 def history():
     global hist_Frame
     hist_Frame = LabelFrame(report_Frame)
-    hist_Frame.config(height=20, width=200, text="History", labelanchor=N, font=('Arial', 12))
-    hist_Frame.grid(row=3, column=0, padx=10, ipady=130, columnspan=3)
+    hist_Frame.config(height=20, width=210, text="History", labelanchor=N, font=('Arial', 12))
+    hist_Frame.grid(row=3, column=0, padx=5, ipady=130, columnspan=3)
     hist_Frame.grid_propagate(False)
     hist_Frame.pack_propagate(False)
 history()
 
 
-
-
 # Define Button Click Functions
 def resetbg(button):
     button.config(bg="light grey")
-
-
-def adjust(mode):
-    try:
-        # For Windows
-        os.system("taskkill /f /im excel.exe")
-        print("Excel has been closed.")
-    except:
-        print(f"No Excel files to close.")
-    try:
-        matching_files = glob.glob(os.path.join(dir_BarFolder, 'VarianceReport*.xlsx'))
-        if matching_files:
-            # Iterate through matching files
-            for excel_file_path in matching_files:
-                # Open the Excel file without displaying the Excel application window
-                app = xw.App(visible=False)
-                workbook = app.books.open(excel_file_path)
-
-                # Specify the VBA macro name
-                macro_name = 'varianceFix'
-
-                # Specify the path to the VBA script or Personal Macro Workbook
-                vba_script_path = os.path.join(dir_Assets, 'macroBook.xlsm')
-
-                # Run the VBA macro from the specified script file
-                workbook.api.Application.Run("'" + vba_script_path + "'!Module1.varianceFix")
-
-                # Save changes and close the workbook
-                workbook.save()
-                workbook.close()
-
-                # Close the Excel application
-                app.quit()
-        else:
-            print("No Excel files starting with 'VarianceReport' found in the specified directory.")
-    except Exception as e:
-        print(str(e))
-        input ("Press any button to continue")
-
-
-
-def namer(mode):
-    global proper
-    proper_str = proper.iloc[0] if isinstance(proper, pd.Series) else str(proper)  # Convert to string
-
-    for filename in os.listdir(dir_BarFolder):
-        if os.path.isfile(os.path.join(dir_BarFolder, filename)):
-            if proper_str not in filename:
-                # Splitting the filename from its extension
-                file_base, file_extension = os.path.splitext(filename)
-                new_filename = proper_str + "_" + file_base + file_extension
-
-                # Check if the new filename already exists
-                count = 1
-                while os.path.exists(os.path.join(dir_BarFolder, new_filename)):
-                    new_filename = f"{proper_str}_{file_base}_{count}{file_extension}"
-                    count += 1
-                
-                os.rename(os.path.join(dir_BarFolder, filename), os.path.join(dir_BarFolder, new_filename))
-                print(f"Renamed '{filename}' to '{new_filename}'")
 
 
 def on_company_click(button, mode):
@@ -341,7 +326,7 @@ def on_company_click(button, mode):
 
 
 def on_bar_click(button, mode):
-    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, report1_button, street, city, inv, price
+    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, street, city, inv, price
     print(f"{mode} is selected")
     bars = pd.read_csv(dir_DB + "\\bardb.csv")
 
@@ -378,10 +363,8 @@ def on_bar_click(button, mode):
     report_Frame.update()
 
 
-
-
 def run_report(button, mode):
-    global dir_BarFolder, workingDir, loadTime, hist_Track
+    global dir_BarFolder, workingDir, loadTime, hist_Track, order_Option, proper
     time1 = time.perf_counter()
 
     status.config(text="Status: Running")
@@ -403,6 +386,7 @@ def run_report(button, mode):
     workingDir = os.getcwd()
 
     rptOption = rpt.get()
+    order_Option = genOrder.get()
 
     if rptOption == 1:
 
@@ -443,15 +427,19 @@ def run_report(button, mode):
         var_hist.pack()
         root.update()
 
-
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
         t4.join()
+        if order_Option == 1:
+            inv_hist = Label(hist_Frame, text=f"{proper} Order Report")
+            inv_hist.pack()
+            hist_Track = hist_Track + 1
 
 
         t5 = threading.Thread(target=namer, kwargs={'mode': mode})
         t5.start()
         t5.join()
+        
 
         t6 = threading.Thread(target=Invoice)
         t6.start()
@@ -509,6 +497,10 @@ def run_report(button, mode):
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
         t4.join()
+        if order_Option == 1:
+            inv_hist = Label(hist_Frame, text=f"{proper} Order Report")
+            inv_hist.pack()
+            hist_Track = hist_Track + 1
 
 
         t5 = threading.Thread(target=namer, kwargs={'mode': mode})
@@ -546,15 +538,14 @@ def run_report(button, mode):
         status.config(text="Status: Ready")
 
 
-
-#Company List
+# Company List
 for text, mode in COMPANIES:
     button = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16))
     button.config(command=lambda button=button, mode=mode:[on_company_click(button, mode)])
     button.pack(pady=15)
 
 
-#Bars Lists
+# Bars Lists
 def bars_EEG():
     for text, mode in EEGBARS:
         button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
@@ -585,6 +576,8 @@ def bars_INDEPENDANT():
         button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
         button.pack(pady=3)
 
+
+# Selenium Instances
 def dlSummary(mode):
     global sum_e
     try:
@@ -650,8 +643,7 @@ def dlSummary(mode):
         log.writelines(L)
         log.close()
         return
-                
-            
+
 
 def dlUsage(mode):
     global use_e
@@ -729,7 +721,6 @@ def dlUsage(mode):
         log.close()
 
 
-
 def dlVar(mode):
     global var_e
     try:
@@ -804,6 +795,112 @@ def dlVar(mode):
         log.writelines(L)
         log.close()
 
+
+# Report Adjustments
+def adjust(mode):
+    today = datetime.datetime.now()
+    try:
+        # For Windows
+        os.system("taskkill /f /im excel.exe")
+        print("Excel has been closed.")
+    except:
+        print(f"No Excel files to close.")
+
+    try:
+        matching_files = glob.glob(os.path.join(dir_BarFolder, 'VarianceReport*.xlsx'))
+        if matching_files:
+            # Iterate through matching files
+            for excel_file_path in matching_files:
+                # Open the Excel file without displaying the Excel application window
+                app = xw.App(visible=False)
+                workbook = app.books.open(excel_file_path)
+
+                # Specify the VBA macro name
+                macro_name = 'varianceFix'
+
+                # Specify the path to the VBA script or Personal Macro Workbook
+                vba_script_path = os.path.join(dir_Assets, 'macroBook.xlsm')
+
+                # Run the VBA macro from the specified script file
+                workbook.api.Application.Run("'" + vba_script_path + "'!Module1.varianceFix")
+
+                # Save changes and close the workbook
+                workbook.save()
+                workbook.close()
+
+                # Close the Excel application
+                app.quit()
+        else:
+            print("No Excel files starting with 'VarianceReport' found in the specified directory.")
+    except Exception as e:
+        print(str(e))
+        input ("Press any button to continue")
+    
+
+    
+    print(order_Option)
+
+    if order_Option == 1:
+        rename = f"Order_Report_{today:%Y}_{today:%m}_{today:%d}.xlsx"
+        
+        usage_File = glob.glob(os.path.join(dir_BarFolder, 'Usage_Report*.xlsx'))[0]
+        copyfile(usage_File, f"{dir_BarFolder}\\{rename}")
+        order_File = glob.glob(os.path.join(dir_BarFolder, 'Order_Report*.xlsx'))[0]
+        
+        try:
+            
+            if os.path.exists(order_File):
+                    # Open the Excel file without displaying the Excel application window
+                    app = xw.App(visible=False)
+                    workbook = app.books.open(order_File)
+
+                    # Specify the VBA macro name
+                    macro_name = 'varianceFix'
+
+                    # Specify the path to the VBA script or Personal Macro Workbook
+                    vba_script_path = os.path.join(dir_Assets, 'macroBook.xlsm')
+
+                    # Run the VBA macro from the specified script file
+                    workbook.api.Application.Run("'" + vba_script_path + "'!Module2.orderReport")
+
+                    # Save changes and close the workbook
+                    workbook.save()
+                    workbook.close()
+
+                    # Close the Excel application
+                    app.quit()
+
+                    print("Generated Order Report")
+            else:
+                print("No Excel files starting with 'Order_Report' found in the specified directory.")
+        except Exception as e:
+            print(str(e))
+            input ("Press any button to continue")
+    else:
+        return
+
+
+def namer(mode):
+    global proper
+    proper_str = proper.iloc[0] if isinstance(proper, pd.Series) else str(proper)  # Convert to string
+
+    for filename in os.listdir(dir_BarFolder):
+        if os.path.isfile(os.path.join(dir_BarFolder, filename)):
+            if proper_str not in filename:
+                # Splitting the filename from its extension
+                file_base, file_extension = os.path.splitext(filename)
+                new_filename = proper_str + "_" + file_base + file_extension
+
+                # Check if the new filename already exists
+                count = 1
+                while os.path.exists(os.path.join(dir_BarFolder, new_filename)):
+                    new_filename = f"{proper_str}_{file_base}_{count}{file_extension}"
+                    count += 1
+                
+                os.rename(os.path.join(dir_BarFolder, filename), os.path.join(dir_BarFolder, new_filename))
+                print(f"Renamed '{filename}' to '{new_filename}'")
+
+
 def Invoice():
     os.chdir(dir_BarFolder)
     today = datetime.datetime.now()
@@ -857,5 +954,7 @@ def Invoice():
     c.drawString(marginleft + 430, 570 - spacey*19, f"${price}.00")
 
     c.save()
+
+
 
 root.mainloop()
