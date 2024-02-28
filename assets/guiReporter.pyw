@@ -452,6 +452,7 @@ def run_report(button, mode):
         print(f"Ran Reporter in {time2 - time1:0.2f} seconds.")
 
         report_button.config(bg="lime", state=NORMAL)
+        os.chdir(dirDownloads)
         status.config(text="Status: Ready")
 
     elif rptOption == 2:
@@ -512,6 +513,7 @@ def run_report(button, mode):
         print(f"Downloaded reports in {time2 - time1:0.2f} seconds.")
 
         report_button.config(bg="lime", state=NORMAL)
+        os.chdir(dir_Downloads)
         status.config(text="Status: Ready")
 
     elif rptOption == 3:
@@ -535,6 +537,7 @@ def run_report(button, mode):
         print(f"Generated Invoice in {time2 - time1:0.2f} seconds.")
 
         report_button.config(bg="lime", state=NORMAL)
+        os.chdir(dir_Downloads)
         status.config(text="Status: Ready")
 
 
