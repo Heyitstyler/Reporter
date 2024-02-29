@@ -23,7 +23,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "Reporter 1.9"
+version = "Reporter 2.0"
 hist_Track = 0
 
 #Directory
