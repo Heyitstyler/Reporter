@@ -8,7 +8,10 @@ import datetime
 import signal
 import pandas as pd
 import requests
+import winshell
 import xlwings as xw
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 from shutil import copyfile
 from barlist import *
 from tkinter import *
@@ -89,6 +92,7 @@ log = open("dllog.txt", "a")
 L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
 log.writelines(L)
 log.close()
+
 
 
 # Update DB
@@ -364,7 +368,7 @@ def on_bar_click(button, mode):
 
 
 def run_report(button, mode):
-    global dir_BarFolder, workingDir, loadTime, hist_Track, order_Option, proper
+    global dir_BarFolder, workingDir, loadTime, hist_Track, order_Option, proper, audit_date
     time1 = time.perf_counter()
 
     status.config(text="Status: Running")
@@ -427,6 +431,19 @@ def run_report(button, mode):
         var_hist.pack()
         root.update()
 
+        summary_File = glob.glob(os.path.join(dir_BarFolder, 'Summary_report*.xlsx'))[0]
+        summary_noExtention = summary_File.rsplit('.', 1)[0]
+        parts = summary_noExtention.split("_")
+        date_str = "-".join(parts[-3:]).strip()  # Join the last three parts to get the date string in 'MM-DD-YYYY' format
+
+        # Parse the date string into a datetime object
+        date_obj = datetime.datetime.strptime(date_str, "%m-%d-%Y")
+
+        # Format the datetime object as desired (e.g., 'YYYY-MM-DD')
+        audit_date = date_obj.strftime("%Y-%m-%d").strip()
+        print(date_obj)
+        print(audit_date)
+
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
         t4.join()
@@ -447,13 +464,16 @@ def run_report(button, mode):
         inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
         inv_hist.pack()
 
+        emailGenReport()
+        emailGenInvoice()
+
         time2 = time.perf_counter()
 
         print(f"Ran Reporter in {time2 - time1:0.2f} seconds.")
-
+        
         report_button.config(bg="lime", state=NORMAL)
-        os.chdir(dirDownloads)
         status.config(text="Status: Ready")
+
 
     elif rptOption == 2:
 
@@ -494,6 +514,18 @@ def run_report(button, mode):
         var_hist.pack()
         root.update()
 
+        summary_File = glob.glob(os.path.join(dir_BarFolder, 'Summary_report*.xlsx'))[0]
+        summary_noExtention = summary_File.rsplit('.', 1)[0]
+        parts = summary_noExtention.split("_")
+        date_str = "-".join(parts[-3:]).strip()  # Join the last three parts to get the date string in 'MM-DD-YYYY' format
+
+        # Parse the date string into a datetime object
+        date_obj = datetime.datetime.strptime(date_str, "%m-%d-%Y")
+
+        # Format the datetime object as desired (e.g., 'YYYY-MM-DD')
+        audit_date = date_obj.strftime("%Y-%m-%d").strip()
+        print(date_obj)
+        print(audit_date)
 
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
@@ -508,12 +540,14 @@ def run_report(button, mode):
         t5.start()
         t5.join()
 
+        emailGenReport()
+        emailGenInvoice()
+
         time2 = time.perf_counter()
 
         print(f"Downloaded reports in {time2 - time1:0.2f} seconds.")
-
+        print(formatted_date)
         report_button.config(bg="lime", state=NORMAL)
-        os.chdir(dir_Downloads)
         status.config(text="Status: Ready")
 
     elif rptOption == 3:
@@ -532,14 +566,16 @@ def run_report(button, mode):
         inv_hist = Label(hist_Frame, text=f"Generated {proper} Invoice")
         inv_hist.pack()
 
+        emailGenInvoice()
+
         time2 = time.perf_counter()
 
         print(f"Generated Invoice in {time2 - time1:0.2f} seconds.")
 
         report_button.config(bg="lime", state=NORMAL)
-        os.chdir(dir_Downloads)
         status.config(text="Status: Ready")
-
+        
+    os.chdir(dir_Root)
 
 # Company List
 for text, mode in COMPANIES:
@@ -582,7 +618,7 @@ def bars_INDEPENDANT():
 
 # Selenium Instances
 def dlSummary(mode):
-    global sum_e
+    global sum_e, audit_date
     try:
         sum_e = "Failed"
         os.chdir(dir_BarFolder)
@@ -633,8 +669,10 @@ def dlSummary(mode):
                     summary_driver.close()
                     time.sleep(0.5)
                     summary_driver.quit()
+                    os.chdir(dir_Root)
                     return
-                
+        
+        
     except:
         sum_e = ("Error Collecting Summary Report")
         summary_driver.close()
@@ -646,6 +684,8 @@ def dlSummary(mode):
         log.writelines(L)
         log.close()
         return
+    
+    
 
 
 def dlUsage(mode):
@@ -711,6 +751,7 @@ def dlUsage(mode):
                     usage_driver.close()
                     time.sleep(0.5)
                     usage_driver.quit()
+                    os.chdir(dir_Root)
                     return
     except:
         use_e = ("Error Collecting Usage Report")
@@ -786,6 +827,7 @@ def dlVar(mode):
                     variance_driver.close()
                     time.sleep(0.5)
                     variance_driver.quit()
+                    os.chdir(dir_Root)
                     return
     except:
         var_e = ("Error Collecting Variance Report")
@@ -833,6 +875,7 @@ def adjust(mode):
 
                 # Close the Excel application
                 app.quit()
+                os.chdir(dir_Root)
         else:
             print("No Excel files starting with 'VarianceReport' found in the specified directory.")
     except Exception as e:
@@ -872,14 +915,16 @@ def adjust(mode):
 
                     # Close the Excel application
                     app.quit()
-
+                    os.chdir(dir_Root)
                     print("Generated Order Report")
             else:
+                os.chdir(dir_Root)
                 print("No Excel files starting with 'Order_Report' found in the specified directory.")
         except Exception as e:
             print(str(e))
             input ("Press any button to continue")
     else:
+        os.chdir(dir_Root)
         return
 
 
@@ -957,7 +1002,33 @@ def Invoice():
     c.drawString(marginleft + 430, 570 - spacey*19, f"${price}.00")
 
     c.save()
+    os.chdir(dir_Root)
 
 
+def emailGenReport():
+    global audit_date
+    link_Proper = proper.replace(" ", "%20")
+    os.chdir(dir_BarFolder)
+    subject = f"GDS%20Consulting's%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}"
+    body = f"GDS%20Consulting's%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}"
+    mail_link = f"https://mail.google.com/mail/u/gdsconsultingllc@gmail.com/?fs=1&tf=cm&source=mailto&su={subject}&body={body}"
+    
+    with open('Report Email.url','w') as f:
+        f.write(f"""[InternetShortcut]
+    URL={mail_link}
+    """)
+
+def emailGenInvoice():
+    global audit_date
+    link_Proper = proper.replace(" ", "%20")
+    os.chdir(dir_BarFolder)
+    subject = f"GDS%20Consulting's%20Invoice%20for%20{link_Proper}%20on%20{audit_date}"
+    body = f"GDS%20Consulting's%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}%0aThanks%20so%20much%21"
+    mail_link = f"https://mail.google.com/mail/u/gdsconsultingllc@gmail.com/?fs=1&tf=cm&source=mailto&su={subject}&body={body}"
+    
+    with open('Invoice Email.url','w') as f:
+        f.write(f"""[InternetShortcut]
+    URL={mail_link}
+    """)
 
 root.mainloop()
