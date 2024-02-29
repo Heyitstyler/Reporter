@@ -8,10 +8,7 @@ import datetime
 import signal
 import pandas as pd
 import requests
-import winshell
 import xlwings as xw
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 from shutil import copyfile
 from barlist import *
 from tkinter import *
