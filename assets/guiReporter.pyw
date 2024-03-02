@@ -23,7 +23,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "Reporter 2.0"
+version = "2.1"
 hist_Track = 0
 
 #Directory
@@ -37,14 +37,14 @@ dir_DB = dir_Root + r"\DB"
 try:
     checkint = requests.get("https://www.google.com", timeout=3)
 except:
-    print("Failed to determine download speed. do you have an internet")
+    print("Can't contact Google. Are you connected to the internet?")
 
 
 # Determine internet speed
     
 # URL of the 5MB file
-file_url = 'http://ipv4.download.thinkbroadband.com/5MB.zip'
-file_size_mb = 5
+file_url = 'http://ipv4.download.thinkbroadband.com/1MB.zip'
+file_size_mb = 1
 
 def download_file(url):
 
@@ -63,32 +63,18 @@ def calculate_speed(download_time, file_size_mb):
     os.remove("5MB.zip")
     return speed_mbps * 8
 
-download_time, _ = download_file(file_url)
-download_speed_mbps = calculate_speed(download_time, file_size_mb)
+# download_time, _ = download_file(file_url)
+# download_speed_mbps = calculate_speed(download_time, file_size_mb)
 
-print(f"Download completed in {download_time:.2f} seconds.")
-print(f"Download speed: {download_speed_mbps:.2f} Mbps")
-
-download_time = round(download_time, 2)
-download_speed_mbps = round(download_speed_mbps, 2)
-loadTime = 1
-if download_time > 50:
-    loadTime = loadTime * 6
-elif download_time > 45:
-    loadTime = loadTime * 5
-elif download_time > 40:
-    loadTime = loadTime * 4
-elif download_time > 35:
-    loadTime = loadTime * 3
-elif download_time > 30:
-    loadTime = loadTime * 2
+# print(f"Download completed in {download_time:.2f} seconds.")
+# print(f"Download speed: {download_speed_mbps:.2f} Mbps")
 
 # Save to download log
-os.chdir(dir_Root)
-log = open("dllog.txt", "a")
-L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
-log.writelines(L)
-log.close()
+# os.chdir(dir_Root)
+# log = open("dllog.txt", "a")
+# L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
+# log.writelines(L)
+# log.close()
 
 
 
@@ -215,7 +201,7 @@ def updateMacro():
 # Root
 root = Tk()
 root.geometry("800x530")
-root.title("Reporter")
+root.title(f"Reporter {version}")
 root.resizable(False, False)
 message_queue = queue.Queue()
 
@@ -253,7 +239,7 @@ report_Frame.grid(row=1, column=2, padx=30, pady=5)
 
 
 # Sub-Report Frames
-report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=8, state=DISABLED, anchor=N)
+report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=8, state=DISABLED)
 report_button.grid(row=0, column=0, pady=8, columnspan=3)
 
 folder_Button = Button(report_Frame, text="Open Downloads Folder", bg="light grey", font=("Arial", 12), pady=3, anchor=N, command=lambda:os.startfile(dir_Downloads))
@@ -365,7 +351,7 @@ def on_bar_click(button, mode):
 
 
 def run_report(button, mode):
-    global dir_BarFolder, workingDir, loadTime, hist_Track, order_Option, proper, audit_date
+    global dir_BarFolder, workingDir, hist_Track, order_Option, proper, audit_date
     time1 = time.perf_counter()
 
     status.config(text="Status: Running")
@@ -438,8 +424,7 @@ def run_report(button, mode):
 
         # Format the datetime object as desired (e.g., 'YYYY-MM-DD')
         audit_date = date_obj.strftime("%Y-%m-%d").strip()
-        print(date_obj)
-        print(audit_date)
+        print(f"Audit was performed on {audit_date}")
 
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
@@ -521,8 +506,7 @@ def run_report(button, mode):
 
         # Format the datetime object as desired (e.g., 'YYYY-MM-DD')
         audit_date = date_obj.strftime("%Y-%m-%d").strip()
-        print(date_obj)
-        print(audit_date)
+        print(f"Audit was performed on {audit_date}")
 
         t4 = threading.Thread(target=adjust, kwargs={'mode': mode})
         t4.start()
@@ -616,6 +600,7 @@ def bars_INDEPENDANT():
 # Selenium Instances
 def dlSummary(mode):
     global sum_e, audit_date
+    found_Sum = "False"
     try:
         sum_e = "Failed"
         os.chdir(dir_BarFolder)
@@ -629,9 +614,11 @@ def dlSummary(mode):
 
 
         summary_driver = webdriver.Firefox(options=options)
+        sumWait = WebDriverWait(summary_driver, 90)
 
-        summary_driver.get("https://www.barkeepapp.com/BarkeepOnline/login.php")
+        summary_driver.get("https://www.barkeepapp.com/BarkeepOnline/inventories.php")
 
+        login_Loaded = sumWait.until(EC.presence_of_element_located((By.NAME, 'session_username')))
         username_field = summary_driver.find_element(By.NAME, 'session_username')
         username_field.send_keys(barSelect)
         password_field = summary_driver.find_element(By.NAME, 'session_password')
@@ -639,21 +626,19 @@ def dlSummary(mode):
         login_button = summary_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(loadTime)
-
-        navigate_summary = summary_driver.find_element(By.ID, 'inventoriesButton')
-        navigate_summary.click()
-        time.sleep(loadTime)
+        inventories_Loaded = sumWait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div[4]/div/div[3]/div[2]/table/tbody/tr[1]/td[1]/a[1]')))
         full_summary = summary_driver.find_element(By.XPATH, '/html/body/div/div[4]/div/div[3]/div[2]/table/tbody/tr[1]/td[1]/a[1]')
         full_summary.click()
-        time.sleep(loadTime)
+
+        full_Loaded = sumWait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="dropdownMenu1"]')))
         dropdown_summary = summary_driver.find_element(By.XPATH, '//*[@id="dropdownMenu1"]')
         dropdown_summary.click()
-        time.sleep(loadTime/2)
+
+        full_Loaded = sumWait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[4]/div[2]/ul/li[1]/a')))
         download_summary = summary_driver.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/ul/li[1]/a')
         download_summary.click()
 
-        while True:
+        while found_Sum =="False":
         # List all files in the specified directory
             files = os.listdir(workingDir)
 
@@ -667,6 +652,7 @@ def dlSummary(mode):
                     time.sleep(0.5)
                     summary_driver.quit()
                     os.chdir(dir_Root)
+                    found_Sum = "True"
                     return
         
         
@@ -687,6 +673,7 @@ def dlSummary(mode):
 
 def dlUsage(mode):
     global use_e
+    found_Use = "False"
     try:
         dl = f"{dir_Root} + \\_downloads"
         keyword = 'Usage'
@@ -699,8 +686,10 @@ def dlUsage(mode):
 
         usage_driver = webdriver.Firefox(options=options)
 
-        usage_driver.get("https://www.barkeepapp.com/BarkeepOnline/login.php")
+        usage_driver.get("https://www.barkeepapp.com/BarkeepOnline/usageReport.php")
+        waitUse = WebDriverWait(usage_driver, 90)
 
+        login_Loaded = waitUse.until(EC.presence_of_element_located((By.NAME, 'session_username')))
         username_field = usage_driver.find_element(By.NAME, 'session_username')
         username_field.send_keys(barSelect)
         password_field = usage_driver.find_element(By.NAME, 'session_password')
@@ -708,34 +697,27 @@ def dlUsage(mode):
         login_button = usage_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(loadTime)
 
-        navigate_reports = usage_driver.find_element(By.ID, 'reportsButton')
-        navigate_reports.click()
-        navigate_Usage = usage_driver.find_element(By.ID, "usageReportButton")
-        navigate_Usage.click()
-
-        time.sleep(loadTime)
-
+        usage_Loaded = waitUse.until(EC.presence_of_element_located((By.ID, "startInventoryId")))
         use_start_date_drop = usage_driver.find_element(By.ID, "startInventoryId")
         use_start_date_drop.click()
-        time.sleep(loadTime/2)
+
         use_start_date_select = usage_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
         use_start_date_select.click()
         use_end_date_drop = usage_driver.find_element(By.ID, "endInventoryId")
         use_end_date_drop.click()
-        time.sleep(loadTime/2)
+
         use_end_date_select = usage_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
         use_end_date_select.click()
-        time.sleep(loadTime/2)
+
 
         run_js = 'runReport()'
         usage_driver.execute_script(run_js)
-        time.sleep(loadTime*4)
+        report_Loaded = waitUse.until(EC.presence_of_element_located((By.XPATH, "/html/body/div/div[4]/div/div[2]/div[2]/table/tbody/tr[2]")))
         download_js = 'downloadReport()'
         usage_driver.execute_script(download_js)
 
-        while True:
+        while found_Use == "False":
         # List all files in the specified directory
             files = os.listdir(workingDir)
 
@@ -744,26 +726,30 @@ def dlUsage(mode):
                 if file.startswith(keyword) and not file.endswith(".part"):
                     print(f"Found file: {file}")
                     use_e = (f"{proper} Usage Report")
-                    time.sleep(1)
+                    time.sleep(1.5)
                     usage_driver.close()
                     time.sleep(0.5)
                     usage_driver.quit()
                     os.chdir(dir_Root)
-                    return
-    except:
+                    found_Use = "True"
+                    
+    except Exception as e:
         use_e = ("Error Collecting Usage Report")
+        error_e = (f"Error Collecting Usage Report {e}")
+        print(error_e)
         usage_driver.close()
         time.sleep(1)
         usage_driver.quit()
         os.chdir(dir_Root)
         log = open("dllog.txt", "a")
-        L = [f"Failed Usage Report\n"]
+        L = [f"Failed Usage Report\n{e}\n"]
         log.writelines(L)
         log.close()
 
 
 def dlVar(mode):
     global var_e
+    found_Var = "False"
     try:
         keyword = 'Variance'
         options = Options()
@@ -775,8 +761,10 @@ def dlVar(mode):
 
         variance_driver = webdriver.Firefox(options=options)
 
-        variance_driver.get("https://www.barkeepapp.com/BarkeepOnline/login.php")
+        variance_driver.get("https://www.barkeepapp.com/BarkeepOnline/varianceReport.php")
+        waitVar = WebDriverWait(variance_driver, 90)
 
+        login_Loaded = waitVar.until(EC.presence_of_element_located((By.NAME, 'session_username')))
         username_field = variance_driver.find_element(By.NAME, 'session_username')
         username_field.send_keys(barSelect)
         password_field = variance_driver.find_element(By.NAME, 'session_password')
@@ -784,34 +772,28 @@ def dlVar(mode):
         login_button = variance_driver.find_element(By.NAME, 'login')
         login_button.click()
 
-        time.sleep(loadTime)
 
-        navigate_reports = variance_driver.find_element(By.ID, 'reportsButton')
-        navigate_reports.click()
-        navigate_Variance = variance_driver.find_element(By.ID, "varianceReportButton")
-        navigate_Variance.click()
-
-        time.sleep(loadTime)
-
+        variance_Loaded = waitVar.until(EC.presence_of_element_located((By.ID, 'startInventoryId')))
         var_start_date_drop = variance_driver.find_element(By.ID, "startInventoryId")
         var_start_date_drop.click()
-        time.sleep(loadTime/2)
+        # time.sleep(loadTime/2)
         var_start_date_select = variance_driver.find_element(By.XPATH, '//select[@id="startInventoryId"]/option[3]')
         var_start_date_select.click()
         var_end_date_drop = variance_driver.find_element(By.ID, "endInventoryId")
         var_end_date_drop.click()
-        time.sleep(loadTime/2)
+        # time.sleep(loadTime/2)
         var_end_date_select = variance_driver.find_element(By.XPATH, '//select[@id="endInventoryId"]/option[2]')
         var_end_date_select.click()
-        time.sleep(loadTime/2)
+        # time.sleep(loadTime/2)
 
         run_js = 'runReport()'
         variance_driver.execute_script(run_js)
-        time.sleep(loadTime*4)
+        # time.sleep(loadTime*4)
+        report_Loaded = waitVar.until(EC.presence_of_element_located((By.XPATH, "/html/body/div/div[4]/div/div[1]/div/div[2]/div[2]/table/tbody/tr[2]")))
         download_js = 'downloadReport()'
         variance_driver.execute_script(download_js)
 
-        while True:
+        while found_Var == "False":
         # List all files in the specified directory
             files = os.listdir(workingDir)
 
@@ -825,9 +807,12 @@ def dlVar(mode):
                     time.sleep(0.5)
                     variance_driver.quit()
                     os.chdir(dir_Root)
-                    return
-    except:
+                    found_Var = "True"
+                
+    except Exception as e:
         var_e = ("Error Collecting Variance Report")
+        error_e = (f"Error Collecting Variance Report {e}")
+        print(error_e)
         variance_driver.close()
         time.sleep(1)
         variance_driver.quit()
@@ -921,6 +906,7 @@ def adjust(mode):
             print(str(e))
             input ("Press any button to continue")
     else:
+        print("No Extras Selected")
         os.chdir(dir_Root)
         return
 
