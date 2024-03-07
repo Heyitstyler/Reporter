@@ -7,7 +7,7 @@ COMPANIES = [
 ]
 
 EEGBARS = [
-    ("Backyard", "sandbar desert"),
+    ("Backyard", "backyard"),
     ("Bevvy", "bevvy"),
     ("Bottled Blonde", "bottled"),
     ("Casa Amigos", "casa amigos"),
