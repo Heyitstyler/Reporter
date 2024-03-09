@@ -140,33 +140,7 @@ def updateDB():
             root.update()
         Label(hist_Frame, text="Error downloading new bardb.csv").pack()
         hist_Track = hist_Track + 1
-    
-    try:
-        os.chdir(dir_Assets)
-        requests.get(listpyURL, timeout=5)
-        try:
-            os.remove("barlist.backup.py")
-        except:
-            print("no backup barlist")
-        os.rename("barlist.py", "barlist.backup.py")
-        download_file(listpyURL)
-        print("Downloaded New barlist.py")
-        if hist_Track >= 11:
-            hist_Frame.forget()
-            hist_Track = 0
-            history()
-            root.update()
-        Label(hist_Frame, text="Downloaded New barlist.py").pack()
-        hist_Track = hist_Track + 1
-    except:
-        print("error downloading new barlist.py")
-        if hist_Track >= 11:
-            hist_Frame.forget()
-            hist_Track = 0
-            history()
-            root.update()
-        Label(hist_Frame, text="Error downloading new barlist.py").pack()
-        hist_Track = hist_Track + 1
+
 
 def updateRep():
     global hist_Track
