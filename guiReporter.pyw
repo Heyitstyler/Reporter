@@ -45,7 +45,7 @@ def calculate_speed(download_time, file_size_mb):
 
 # Update DB
 def initialDB():
-    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/DB/bardb.csv"
+    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/bardb.csv"
     try:
         os.chdir(dir_Assets)
         requests.get(csvURL, timeout=5)
@@ -64,7 +64,7 @@ def initialMacro():
 
 def updateDB():
     global hist_Track
-    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/DB/bardb.csv"
+    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/bardb.csv"
     try:
         os.chdir(dir_DB)
         requests.get(csvURL, timeout=5)
@@ -82,8 +82,8 @@ def updateDB():
             root.update()
         Label(hist_Frame, text="Downloaded new bardb.csv").pack()
         hist_Track = hist_Track + 1
-    except:
-        print("Error downloading new bardb.csv")
+    except Exception as e:
+        print(f"Error downloading new bardb.csv {e}")
         if hist_Track >= 11:
             hist_Frame.forget()
             hist_Track = 0
