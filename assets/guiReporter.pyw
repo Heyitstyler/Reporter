@@ -1,4 +1,5 @@
 import os
+import csv
 import sys
 import time
 import threading
@@ -10,7 +11,6 @@ import pandas as pd
 import requests
 import xlwings as xw
 from shutil import copyfile
-from barlist import *
 from tkinter import *
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -23,7 +23,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "2.1"
+version = "2.2"
 hist_Track = 0
 
 #Directory
@@ -32,6 +32,7 @@ os.chdir("..")
 dir_Root = os.getcwd()
 dir_Downloads = dir_Root + r"\_downloads"
 dir_DB = dir_Root + r"\DB"
+bardbloc = dir_DB + "\\bardb.csv"
 
 # Initial internet check
 try:
@@ -63,19 +64,49 @@ def calculate_speed(download_time, file_size_mb):
     os.remove("5MB.zip")
     return speed_mbps * 8
 
-# download_time, _ = download_file(file_url)
-# download_speed_mbps = calculate_speed(download_time, file_size_mb)
 
-# print(f"Download completed in {download_time:.2f} seconds.")
-# print(f"Download speed: {download_speed_mbps:.2f} Mbps")
+def add_to_list(group_name, data_tuple):
+    # Check if the list already exists in globals; if not, initialize it
+    if group_name not in globals():
+        globals()[group_name] = []
+    globals()[group_name].append(data_tuple)
 
-# Save to download log
-# os.chdir(dir_Root)
-# log = open("dllog.txt", "a")
-# L = [f"Download Time: {download_time} ", f" Download Speed: {download_speed_mbps}\n"]
-# log.writelines(L)
-# log.close()
+# Set to keep track of unique group names
+unique_groups = set()
+company_names = set()
 
+# Open the CSV file
+with open(bardbloc, mode='r') as csv_file:
+    # Create a CSV reader
+    csv_reader = csv.DictReader(csv_file)
+    
+    # Iterate through each row in the CSV
+    for row in csv_reader:
+        if row['group'] == 'Canceled':
+            continue
+        # Extract and process the group name
+        group_name = row['group'].upper() + 'BARS'
+        company_names.add(group_name)
+        
+        # Add the original group name to the set of unique groups
+        original_group_name = row['group']
+        unique_groups.add(original_group_name)
+        
+        # Assuming 'appropriate_column' is the name of your desired column
+        # Create a tuple from the appropriate column and the 'user' column
+        data_tuple = (row['proper'], row['user'])
+        
+        # Add the tuple to the correct list
+        add_to_list(group_name, data_tuple)
+
+# Now, create the COMPANIES list from the unique groups set
+COMPANIES = [(group, group) for group in unique_groups]
+
+for text, mode in COMPANIES:
+    print(f"Text: {text}, Mode: {mode}")
+
+# If you want to sort the COMPANIES list alphabetically by the first element of the tuples
+COMPANIES.sort(key=lambda x: x[0])
 
 
 # Update DB
@@ -304,16 +335,12 @@ def on_company_click(button, mode):
     for widget in bars_Frame.winfo_children():
         widget.destroy()
     button.configure(bg="dark grey")
-    if mode == "EEG": bars_EEG()
-    if mode == "Pedal": bars_PEDAL()
-    if mode == "Porch": bars_PORCH()
-    if mode == "Babbos": bars_BABBOS()
-    if mode == "Independant": bars_INDEPENDANT()
+    bars_for_group(f'{mode}')
     print(f"Button for {mode} clicked")
 
 
 def on_bar_click(button, mode):
-    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, street, city, inv, price
+    global hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, barSelect, street, city, inv, price, user, bargroup
     print(f"{mode} is selected")
     bars = pd.read_csv(dir_DB + "\\bardb.csv")
 
@@ -335,12 +362,14 @@ def on_bar_click(button, mode):
         else:
             break
 
+    user = userRow["user"].iloc[0]
     passwd = userRow["pass"].iloc[0]
     proper = userRow["proper"].iloc[0]
     street = userRow["street"].iloc[0]
     city = userRow["city"].iloc[0]
     inv = userRow["invoicename"].iloc[0]
     price = userRow["price"].iloc[0]
+    bargroup = userRow["group"].iloc[0]
         
     
     for widget in bars_Frame.winfo_children():
@@ -558,44 +587,26 @@ def run_report(button, mode):
         
     os.chdir(dir_Root)
 
-# Company List
 for text, mode in COMPANIES:
     button = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16))
     button.config(command=lambda button=button, mode=mode:[on_company_click(button, mode)])
     button.pack(pady=15)
 
-
-# Bars Lists
-def bars_EEG():
-    for text, mode in EEGBARS:
-        button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=2)
-
-def bars_PEDAL():
-    for text, mode in PEDALBARS:
-        button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=5)
-
-def bars_PORCH():
-    for text, mode in PORCHBARS:
-        button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=5)
-
-def bars_BABBOS():
-    for text, mode in BABBOSBARS:
-        button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=3)
-   
-def bars_INDEPENDANT():
-    for text, mode in INDEPENDANTBARS:
-        button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
-        button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
-        button.pack(pady=3)
-
+def bars_for_group(group_name):
+    # Construct the name of the list variable for the specified group
+    bars_list_name = group_name.upper() + 'BARS'
+    
+    # Access the list variable dynamically using globals()
+    if bars_list_name in globals():
+        bars_list = globals()[bars_list_name]
+        for text, mode in bars_list:
+            button = Button(bars_Frame, text=text, bg="light grey", font=('Arial', 16))
+            button.config(command=lambda button=button, mode=mode: on_bar_click(button, mode))
+            
+            # Adjust padding based on the group name if needed
+            pady_value = 2  # Default padding, can be adjusted as needed
+            
+            button.pack(pady=pady_value)
 
 # Selenium Instances
 def dlSummary(mode):
