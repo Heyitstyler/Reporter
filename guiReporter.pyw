@@ -95,7 +95,7 @@ def updateDB():
 
 def updateRep():
     global hist_Track
-    repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/guiReporter.pyw"
+    repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/guiReporter.pyw"
     try:
         os.chdir(dir_Root)
         requests.get(repURL, timeout=5)
