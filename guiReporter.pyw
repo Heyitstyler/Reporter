@@ -26,27 +26,6 @@ from selenium.webdriver.common.by import By
 version = "2.2"
 hist_Track = 0
 
-#Directory
-dir_Assets = os.getcwd()
-os.chdir("..")
-dir_Root = os.getcwd()
-dir_Downloads = dir_Root + r"\_downloads"
-dir_DB = dir_Root + r"\DB"
-bardbloc = dir_DB + "\\bardb.csv"
-
-# Initial internet check
-try:
-    checkint = requests.get("https://www.google.com", timeout=3)
-except:
-    print("Can't contact Google. Are you connected to the internet?")
-
-
-# Determine internet speed
-    
-# URL of the 5MB file
-file_url = 'http://ipv4.download.thinkbroadband.com/1MB.zip'
-file_size_mb = 1
-
 def download_file(url):
 
     local_filename = url.split('/')[-1]
@@ -64,52 +43,27 @@ def calculate_speed(download_time, file_size_mb):
     os.remove("5MB.zip")
     return speed_mbps * 8
 
-
-def add_to_list(group_name, data_tuple):
-    # Check if the list already exists in globals; if not, initialize it
-    if group_name not in globals():
-        globals()[group_name] = []
-    globals()[group_name].append(data_tuple)
-
-# Set to keep track of unique group names
-unique_groups = set()
-company_names = set()
-
-# Open the CSV file
-with open(bardbloc, mode='r') as csv_file:
-    # Create a CSV reader
-    csv_reader = csv.DictReader(csv_file)
-    
-    # Iterate through each row in the CSV
-    for row in csv_reader:
-        if row['group'] == 'Canceled':
-            continue
-        # Extract and process the group name
-        group_name = row['group'].upper() + 'BARS'
-        company_names.add(group_name)
-        
-        # Add the original group name to the set of unique groups
-        original_group_name = row['group']
-        unique_groups.add(original_group_name)
-        
-        # Assuming 'appropriate_column' is the name of your desired column
-        # Create a tuple from the appropriate column and the 'user' column
-        data_tuple = (row['proper'], row['user'])
-        
-        # Add the tuple to the correct list
-        add_to_list(group_name, data_tuple)
-
-# Now, create the COMPANIES list from the unique groups set
-COMPANIES = [(group, group) for group in unique_groups]
-
-# If you want to sort the COMPANIES list alphabetically by the first element of the tuples
-COMPANIES.sort(key=lambda x: x[0])
-
-
 # Update DB
+def initialDB():
+    csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/DB/bardb.csv"
+    try:
+        os.chdir(dir_Assets)
+        requests.get(csvURL, timeout=5)
+        download_file(csvURL)
+    except:
+        print("Error downloading Bar Database")
+
+def initialMacro():
+    MacroURL = "https://github.com/Heyitstyler/Reporter/raw/main/assets/macroBook.xlsm"
+    try:
+        os.chdir(dir_Assets)
+        requests.get(MacroURL, timeout=5)
+        download_file(MacroURL)
+    except:
+        print("Error downloading Macro Book")
+
 def updateDB():
     global hist_Track
-    listpyURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/barlist.py"
     csvURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/DB/bardb.csv"
     try:
         os.chdir(dir_DB)
@@ -143,7 +97,7 @@ def updateRep():
     global hist_Track
     repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/assets/guiReporter.pyw"
     try:
-        os.chdir(dir_Assets)
+        os.chdir(dir_Root)
         requests.get(repURL, timeout=5)
         try:
             os.remove("guiReporter.backup.pyw")
@@ -198,6 +152,90 @@ def updateMacro():
             root.update()
         Label(hist_Frame, text="Error downloading new Macro Book").pack()
         hist_Track = hist_Track + 1
+
+#Directory
+if not os.path.exists("_downloads"):
+    os.makedirs("_downloads")
+
+if os.path.exists("Scripts") and os.path.isfile("pyvenv.cfg"):
+    installType = "SOURCE"
+else:
+    installType = "EXE"
+
+if os.path.exists("assets"):
+    dir_Root = os.getcwd()
+    dir_Assets = dir_Root + "\\" + "assets"
+    dir_Downloads = dir_Root + "\\" "_downloads"
+    dir_DB = dir_Root + "\\" + "assets"
+    bardbloc = dir_DB + "\\" + "bardb.csv"
+
+else:
+    os.makedirs("assets")
+    dir_Root = os.getcwd()
+    dir_Assets = dir_Root + "\\" + "assets"
+    dir_Downloads = dir_Root + "\\" "_downloads"
+    dir_DB = dir_Root + "\\" + "assets"
+    bardbloc = dir_DB + "\\" + "bardb.csv"
+    initialDB()
+    initialMacro()
+    
+
+# Initial internet check
+try:
+    checkint = requests.get("https://www.google.com", timeout=3)
+except:
+    print("Can't contact Google. Are you connected to the internet?")
+
+
+# Determine internet speed
+    
+# URL of the 5MB file
+file_url = 'http://ipv4.download.thinkbroadband.com/1MB.zip'
+file_size_mb = 1
+
+
+def add_to_list(group_name, data_tuple):
+    # Check if the list already exists in globals; if not, initialize it
+    if group_name not in globals():
+        globals()[group_name] = []
+    globals()[group_name].append(data_tuple)
+
+# Set to keep track of unique group names
+unique_groups = set()
+company_names = set()
+
+# Open the CSV file
+with open(bardbloc, mode='r') as csv_file:
+    # Create a CSV reader
+    csv_reader = csv.DictReader(csv_file)
+    
+    # Iterate through each row in the CSV
+    for row in csv_reader:
+        if row['group'] == 'Canceled':
+            continue
+        # Extract and process the group name
+        group_name = row['group'].upper() + 'BARS'
+        company_names.add(group_name)
+        
+        # Add the original group name to the set of unique groups
+        original_group_name = row['group']
+        unique_groups.add(original_group_name)
+        
+        # Assuming 'appropriate_column' is the name of your desired column
+        # Create a tuple from the appropriate column and the 'user' column
+        data_tuple = (row['proper'], row['user'])
+        
+        # Add the tuple to the correct list
+        add_to_list(group_name, data_tuple)
+
+# Now, create the COMPANIES list from the unique groups set
+COMPANIES = [(group, group) for group in unique_groups]
+
+# If you want to sort the COMPANIES list alphabetically by the first element of the tuples
+COMPANIES.sort(key=lambda x: x[0])
+
+
+
 
 
 # Root
