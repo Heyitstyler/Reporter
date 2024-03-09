@@ -102,9 +102,6 @@ with open(bardbloc, mode='r') as csv_file:
 # Now, create the COMPANIES list from the unique groups set
 COMPANIES = [(group, group) for group in unique_groups]
 
-for text, mode in COMPANIES:
-    print(f"Text: {text}, Mode: {mode}")
-
 # If you want to sort the COMPANIES list alphabetically by the first element of the tuples
 COMPANIES.sort(key=lambda x: x[0])
 
