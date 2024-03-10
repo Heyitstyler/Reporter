@@ -10,6 +10,7 @@ import signal
 import pandas as pd
 import requests
 import xlwings as xw
+import subprocess
 from shutil import copyfile
 from tkinter import *
 from reportlab.pdfgen import canvas
@@ -96,32 +97,80 @@ def updateDB():
 def updateRep():
     global hist_Track
     repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/guiReporter.pyw"
-    try:
-        os.chdir(dir_Root)
-        requests.get(repURL, timeout=5)
+    exeURL = "https://github.com/Heyitstyler/Reporter/releases/latest/download/Reporter.exe"
+    exeConURL = "https://github.com/Heyitstyler/Reporter/releases/latest/download/Reporter.Console.exe"
+    if installType == "SOURCE":
         try:
-            os.remove("guiReporter.backup.pyw")
-        except:
-            print("No backup Reporter")
-        os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
-        download_file(repURL)
-        print("Downloaded New Reporter")
-        if hist_Track >= 11:
-            hist_Frame.forget()
-            hist_Track = 0
-            history()
-            root.update()
-        Label(hist_Frame, text="Downloaded new Reporter").pack()
-        hist_Track = hist_Track + 1
-    except Exception as e:
-        print(f"Error downloading new Reporter {e}")
-        if hist_Track >= 11:
-            hist_Frame.forget()
-            hist_Track = 0
-            history()
-            root.update()
-        Label(hist_Frame, text="Error downloading new Reporter").pack()
-        hist_Track = hist_Track + 1
+            os.chdir(dir_Root)
+            requests.get(repURL, timeout=5)
+            try:
+                os.remove("guiReporter.backup.pyw")
+            except:
+                print("No backup Reporter")
+            os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
+            download_file(repURL)
+            print("Downloaded New Reporter")
+            if hist_Track >= 11:
+                hist_Frame.forget()
+                hist_Track = 0
+                history()
+                root.update()
+            Label(hist_Frame, text="Downloaded new Reporter").pack()
+            hist_Track = hist_Track + 1
+        except Exception as e:
+            print(f"Error downloading new Reporter {e}")
+            if hist_Track >= 11:
+                hist_Frame.forget()
+                hist_Track = 0
+                history()
+                root.update()
+            Label(hist_Frame, text="Error downloading new Reporter").pack()
+            hist_Track = hist_Track + 1
+
+    elif installType == "EXE":
+        try:
+            os.chdir(dir_Update)
+            requests.get(exeURL, timeout=5)
+            try:
+                download_file(exeURL)
+                download_file(exeConURL)
+                print("Downloaded New Reporter")
+                if os.path.exists(r"C:\\Users\\Tyler\\AppData\\Roaming\\Reporter\\update\\update.bat"):
+                    subprocess.Popen([f'{dir_Update}\\update.bat', f"{dir_Root}"], stdout=None, stdin=None, stderr=None, creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    sys.exit()
+                else:
+                    batch_content = r"""set arg1=%1\ntimeout 3\ncopy "Reporter.exe" "%~1"\ncopy "Reporter.Console.exe" "%~1"\npause"""
+
+                    # Specify the path and name of the batch file you want to create
+                    batch_file_path = f"{appdata}" + "\\Reporter\\update\\update.bat"
+
+                # Use 'with' statement to open a file and ensure proper closure
+                with open(batch_file_path, 'w') as batch_file:
+                    # Write the content to the batch file
+                    batch_file.write(batch_content)
+
+                print(f"Batch file created at {batch_file_path}")
+            except Exception as e:
+                print ({e})
+                return
+            
+            if hist_Track >= 11:
+                hist_Frame.forget()
+                hist_Track = 0
+                history()
+                root.update()
+            Label(hist_Frame, text="Downloaded new Reporter").pack()
+            hist_Track = hist_Track + 1
+        except Exception as e:
+            print(f"Error downloading new Reporter {e}")
+            if hist_Track >= 11:
+                hist_Frame.forget()
+                hist_Track = 0
+                history()
+                root.update()
+            Label(hist_Frame, text="Error downloading new Reporter").pack()
+            hist_Track = hist_Track + 1
+
 
 def updateMacro():
     global hist_Track
@@ -154,6 +203,8 @@ def updateMacro():
         hist_Track = hist_Track + 1
 
 #Directory
+appdata = os.getenv('APPDATA')
+appdataPATH = f"{appdata}" + r"\\Reporter"
 if not os.path.exists("_downloads"):
     os.makedirs("_downloads")
 
@@ -162,22 +213,61 @@ if os.path.exists("Scripts") and os.path.isfile("pyvenv.cfg"):
 else:
     installType = "EXE"
 
-if os.path.exists("assets"):
-    dir_Root = os.getcwd()
-    dir_Assets = dir_Root + "\\" + "assets"
-    dir_Downloads = dir_Root + "\\" "_downloads"
-    dir_DB = dir_Root + "\\" + "assets"
-    bardbloc = dir_DB + "\\" + "bardb.csv"
+if installType == "SOURCE":
+    if os.path.exists("assets"):
+        dir_Root = os.getcwd()
+        dir_Assets = dir_Root + "\\" + "assets"
+        dir_Downloads = dir_Root + "\\" "_downloads"
+        dir_DB = dir_Root + "\\" + "assets"
+        bardbloc = dir_DB + "\\" + "bardb.csv"
 
-else:
-    os.makedirs("assets")
-    dir_Root = os.getcwd()
-    dir_Assets = dir_Root + "\\" + "assets"
-    dir_Downloads = dir_Root + "\\" "_downloads"
-    dir_DB = dir_Root + "\\" + "assets"
-    bardbloc = dir_DB + "\\" + "bardb.csv"
-    initialDB()
-    initialMacro()
+    else:
+        os.makedirs("assets")
+        dir_Root = os.getcwd()
+        dir_Assets = dir_Root + "\\" + "assets"
+        dir_Downloads = dir_Root + "\\" "_downloads"
+        dir_DB = dir_Root + "\\" + "assets"
+        bardbloc = dir_DB + "\\" + "bardb.csv"
+        initialDB()
+        initialMacro()
+
+elif installType == "EXE":
+    if os.path.exists(appdataPATH + "\\assets") and os.path.exists(appdataPATH + "\\update"):
+        dir_Root = os.getcwd()
+        dir_Assets = appdataPATH + "\\" + "assets"
+        dir_Downloads = dir_Root + "\\" "_downloads"
+        dir_DB = appdataPATH + "\\" + "assets"
+        bardbloc = dir_DB + "\\" + "bardb.csv"
+        dir_Update = appdataPATH + "\\" + "update"
+
+    else:
+        os.makedirs(appdataPATH)
+        os.makedirs(appdataPATH + "\\assets")
+        os.makedirs(appdataPATH + "\\update")
+        dir_Root = os.getcwd()
+        dir_Assets = appdataPATH + "\\" + "assets"
+        dir_Downloads = dir_Root + "\\" "_downloads"
+        dir_DB = appdataPATH + "\\" + "assets"
+        bardbloc = dir_DB + "\\" + "bardb.csv"
+        dir_Update = appdataPATH + "\\" + "update"
+        initialDB()
+        initialMacro()
+        batch_content = r"""set arg1=%1
+        timeout 3
+        copy "Reporter.exe" "%~1"
+        copy "Reporter.Console.exe" "%~1"
+        pause
+        """
+
+                    # Specify the path and name of the batch file you want to create
+        batch_file_path = f"{appdata}" + r"\\Reporter\\update\\update.bat"
+
+                # Use 'with' statement to open a file and ensure proper closure
+        with open(batch_file_path, 'w') as batch_file:
+                    # Write the content to the batch file
+            batch_file.write(batch_content)
+
+        print(f"Batch file created at {batch_file_path}")
     
 
 # Initial internet check
