@@ -24,7 +24,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "2.2"
+version = "2.2.1"
 hist_Track = 0
 
 def download_file(url):
@@ -204,7 +204,7 @@ def updateMacro():
 
 #Directory
 appdata = os.getenv('APPDATA')
-appdataPATH = f"{appdata}" + r"\\Reporter"
+appdataPATH = f"{appdata}" + "\\" r"Reporter"
 if not os.path.exists("_downloads"):
     os.makedirs("_downloads")
 
