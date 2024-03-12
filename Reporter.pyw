@@ -24,7 +24,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "2.2.1"
+version = "2.2.2"
 hist_Track = 0
 
 def download_file(url):
@@ -95,6 +95,23 @@ def updateDB():
 
 
 def updateRep():
+    batch_content = r"""set arg1=%1
+timeout 3
+copy "Reporter.exe" "%~1"
+copy "Reporter.Console.exe" "%~1"
+pause
+"""
+
+                # Specify the path and name of the batch file you want to create
+    batch_file_path = os.path.join(dir_Update, "update.bat")
+
+            # Use 'with' statement to open a file and ensure proper closure
+    with open(batch_file_path, 'w') as batch_file:
+                # Write the content to the batch file
+        batch_file.write(batch_content)
+
+    print(f"Batch file created at {batch_file_path}")
+
     global hist_Track
     repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/guiReporter.pyw"
     exeURL = "https://github.com/Heyitstyler/Reporter/releases/latest/download/Reporter.exe"
@@ -135,14 +152,18 @@ def updateRep():
                 download_file(exeURL)
                 download_file(exeConURL)
                 print("Downloaded New Reporter")
-                if os.path.exists(r"C:\\Users\\Tyler\\AppData\\Roaming\\Reporter\\update\\update.bat"):
-                    subprocess.Popen([f'{dir_Update}\\update.bat', f"{dir_Root}"], stdout=None, stdin=None, stderr=None, creationflags=subprocess.CREATE_NEW_CONSOLE)
+                if os.path.exists(update_Bat):
+                    subprocess.Popen([update_Bat, f"{dir_Root}"], stdout=None, stdin=None, stderr=None, creationflags=subprocess.CREATE_NEW_CONSOLE)
                     sys.exit()
                 else:
-                    batch_content = r"""set arg1=%1\ntimeout 3\ncopy "Reporter.exe" "%~1"\ncopy "Reporter.Console.exe" "%~1"\npause"""
-
+                    batch_content = r"""set arg1=%1
+timeout 3
+copy "Reporter.exe" "%~1"
+copy "Reporter.Console.exe" "%~1"
+pause
+"""
                     # Specify the path and name of the batch file you want to create
-                    batch_file_path = f"{appdata}" + "\\Reporter\\update\\update.bat"
+                    batch_file_path = os.path.join(dir_Update, "update.bat")
 
                 # Use 'with' statement to open a file and ensure proper closure
                 with open(batch_file_path, 'w') as batch_file:
@@ -204,9 +225,9 @@ def updateMacro():
 
 #Directory
 appdata = os.getenv('APPDATA')
-appdataPATH = f"{appdata}" + "\\" r"Reporter"
-if not os.path.exists("_downloads"):
-    os.makedirs("_downloads")
+appdataPATH = os.path.join(appdata, "Reporter")
+if not os.path.exists("Reporter Downloads"):
+    os.makedirs("Reporter Downloads")
 
 if os.path.exists("Scripts") and os.path.isfile("pyvenv.cfg"):
     installType = "SOURCE"
@@ -216,58 +237,44 @@ else:
 if installType == "SOURCE":
     if os.path.exists("assets"):
         dir_Root = os.getcwd()
-        dir_Assets = dir_Root + "\\" + "assets"
-        dir_Downloads = dir_Root + "\\" "_downloads"
-        dir_DB = dir_Root + "\\" + "assets"
-        bardbloc = dir_DB + "\\" + "bardb.csv"
+        dir_Assets = os.path.join(dir_Root, "assets")
+        dir_Downloads = os.path.join(dir_Root, "Reporter Downloads")
+        dir_DB = dir_Assets
+        bardbloc = os.path.join(dir_Assets, "bardb.csv")
 
     else:
         os.makedirs("assets")
         dir_Root = os.getcwd()
-        dir_Assets = dir_Root + "\\" + "assets"
-        dir_Downloads = dir_Root + "\\" "_downloads"
-        dir_DB = dir_Root + "\\" + "assets"
-        bardbloc = dir_DB + "\\" + "bardb.csv"
+        dir_Assets = os.path.join(dir_Root, "assets")
+        dir_Downloads = os.path.join(dir_Root, "Reporter Downloads")
+        dir_DB = dir_Assets
+        bardbloc = os.path.join(dir_Assets, "bardb.csv")
         initialDB()
         initialMacro()
 
 elif installType == "EXE":
     if os.path.exists(appdataPATH + "\\assets") and os.path.exists(appdataPATH + "\\update"):
         dir_Root = os.getcwd()
-        dir_Assets = appdataPATH + "\\" + "assets"
-        dir_Downloads = dir_Root + "\\" "_downloads"
-        dir_DB = appdataPATH + "\\" + "assets"
-        bardbloc = dir_DB + "\\" + "bardb.csv"
-        dir_Update = appdataPATH + "\\" + "update"
+        dir_Assets = os.path.join(appdataPATH, "assets")
+        dir_Downloads = os.path.join(dir_Root, "Reporter Downloads")
+        dir_DB = dir_Assets
+        bardbloc = os.path.join(dir_Assets, "bardb.csv")
+        dir_Update = os.path.join(appdataPATH, "update")
+        update_Bat = os.path.join(dir_Update, "update.bat")
 
     else:
         os.makedirs(appdataPATH)
         os.makedirs(appdataPATH + "\\assets")
         os.makedirs(appdataPATH + "\\update")
         dir_Root = os.getcwd()
-        dir_Assets = appdataPATH + "\\" + "assets"
-        dir_Downloads = dir_Root + "\\" "_downloads"
-        dir_DB = appdataPATH + "\\" + "assets"
-        bardbloc = dir_DB + "\\" + "bardb.csv"
-        dir_Update = appdataPATH + "\\" + "update"
+        dir_Assets = os.path.join(appdataPATH, "assets")
+        dir_Downloads = os.path.join(dir_Root, "Reporter Downloads")
+        dir_DB = dir_Assets
+        bardbloc = os.path.join(dir_Assets, "bardb.csv")
+        dir_Update = os.path.join(appdataPATH, "update")
+        update_Bat = os.path.join(dir_Update, "update.bat")
         initialDB()
         initialMacro()
-        batch_content = r"""set arg1=%1
-        timeout 3
-        copy "Reporter.exe" "%~1"
-        copy "Reporter.Console.exe" "%~1"
-        pause
-        """
-
-                    # Specify the path and name of the batch file you want to create
-        batch_file_path = f"{appdata}" + r"\\Reporter\\update\\update.bat"
-
-                # Use 'with' statement to open a file and ensure proper closure
-        with open(batch_file_path, 'w') as batch_file:
-                    # Write the content to the batch file
-            batch_file.write(batch_content)
-
-        print(f"Batch file created at {batch_file_path}")
     
 
 # Initial internet check
@@ -409,6 +416,9 @@ optional_Menu = Menu(topMenu)
 topMenu.add_cascade(label='Optional', menu=optional_Menu)
 optional_Menu.add_checkbutton(label="Generate Order Report", variable=genOrder, onvalue=1, offvalue=0)
 
+edit_Menu = Menu(topMenu)
+topMenu.add_cascade(label="Edit", menu=edit_Menu)
+edit_Menu.add_command(label="Edit Bar Database", command = lambda:os.startfile(bardbloc))
 
 # History Frame
 def history():
@@ -785,7 +795,6 @@ def dlUsage(mode):
     global use_e
     found_Use = "False"
     try:
-        dl = f"{dir_Root} + \\_downloads"
         keyword = 'Usage'
         options = Options()
         options.set_preference("browser.download.folderList", 2)
