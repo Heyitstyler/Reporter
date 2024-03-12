@@ -1,2 +1,2 @@
 call Scripts\activate.bat
-python guiReporter.pyw
+python Reporter.pyw
