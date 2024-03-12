@@ -24,7 +24,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "2.2.2"
+version = "2.3"
 hist_Track = 0
 
 def download_file(url):
