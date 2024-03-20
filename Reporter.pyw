@@ -12,6 +12,7 @@ import requests
 import xlwings as xw
 import subprocess
 from shutil import copyfile
+from collections import deque
 from tkinter import *
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -24,8 +25,16 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 #Version
-version = "2.3"
+version = "2.4"
 hist_Track = 0
+barQueue = []
+update_bat_cont = r"""set arg1=%1
+timeout 3
+copy "Reporter.exe" "%~1"
+copy "Reporter.Console.exe" "%~1"
+pause
+"""
+
 
 def download_file(url):
 
@@ -95,25 +104,11 @@ def updateDB():
 
 
 def updateRep():
-    batch_content = r"""set arg1=%1
-timeout 3
-copy "Reporter.exe" "%~1"
-copy "Reporter.Console.exe" "%~1"
-pause
-"""
-
                 # Specify the path and name of the batch file you want to create
-    batch_file_path = os.path.join(dir_Update, "update.bat")
 
-            # Use 'with' statement to open a file and ensure proper closure
-    with open(batch_file_path, 'w') as batch_file:
-                # Write the content to the batch file
-        batch_file.write(batch_content)
-
-    print(f"Batch file created at {batch_file_path}")
 
     global hist_Track
-    repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/guiReporter.pyw"
+    repURL = "https://raw.githubusercontent.com/Heyitstyler/Reporter/main/Reporter.pyw"
     exeURL = "https://github.com/Heyitstyler/Reporter/releases/latest/download/Reporter.exe"
     exeConURL = "https://github.com/Heyitstyler/Reporter/releases/latest/download/Reporter.Console.exe"
     if installType == "SOURCE":
@@ -121,10 +116,10 @@ pause
             os.chdir(dir_Root)
             requests.get(repURL, timeout=5)
             try:
-                os.remove("guiReporter.backup.pyw")
+                os.remove("Reporter.backup.pyw")
             except:
                 print("No backup Reporter")
-            os.rename("guiReporter.pyw", "guiReporter.backup.pyw")
+            os.rename("Reporter.pyw", "Reporter.backup.pyw")
             download_file(repURL)
             print("Downloaded New Reporter")
             if hist_Track >= 11:
@@ -146,6 +141,14 @@ pause
 
     elif installType == "EXE":
         try:
+            batch_file_path = os.path.join(dir_Update, "update.bat")
+
+            # Use 'with' statement to open a file and ensure proper closure
+            with open(batch_file_path, 'w') as batch_file:
+                # Write the content to the batch file
+                batch_file.write(update_bat_cont)
+
+            print(f"Batch file created at {batch_file_path}")
             os.chdir(dir_Update)
             requests.get(exeURL, timeout=5)
             try:
@@ -156,19 +159,13 @@ pause
                     subprocess.Popen([update_Bat, f"{dir_Root}"], stdout=None, stdin=None, stderr=None, creationflags=subprocess.CREATE_NEW_CONSOLE)
                     sys.exit()
                 else:
-                    batch_content = r"""set arg1=%1
-timeout 3
-copy "Reporter.exe" "%~1"
-copy "Reporter.Console.exe" "%~1"
-pause
-"""
                     # Specify the path and name of the batch file you want to create
                     batch_file_path = os.path.join(dir_Update, "update.bat")
 
                 # Use 'with' statement to open a file and ensure proper closure
                 with open(batch_file_path, 'w') as batch_file:
                     # Write the content to the batch file
-                    batch_file.write(batch_content)
+                    batch_file.write(update_bat_cont)
 
                 print(f"Batch file created at {batch_file_path}")
             except Exception as e:
@@ -297,6 +294,7 @@ def add_to_list(group_name, data_tuple):
         globals()[group_name] = []
     globals()[group_name].append(data_tuple)
 
+
 # Set to keep track of unique group names
 unique_groups = set()
 company_names = set()
@@ -318,7 +316,6 @@ with open(bardbloc, mode='r') as csv_file:
         original_group_name = row['group']
         unique_groups.add(original_group_name)
         
-        # Assuming 'appropriate_column' is the name of your desired column
         # Create a tuple from the appropriate column and the 'user' column
         data_tuple = (row['proper'], row['user'])
         
@@ -330,9 +327,7 @@ COMPANIES = [(group, group) for group in unique_groups]
 
 # If you want to sort the COMPANIES list alphabetically by the first element of the tuples
 COMPANIES.sort(key=lambda x: x[0])
-
-
-
+        
 
 
 # Root
@@ -340,8 +335,6 @@ root = Tk()
 root.geometry("800x530")
 root.title(f"Reporter {version}")
 root.resizable(False, False)
-message_queue = queue.Queue()
-
 
 # Top Labels
 comp_Label = Label(root, text="Companies", background="light blue", width=10, pady=10, font=('Arial', 24))
@@ -374,13 +367,41 @@ report_Frame.grid_propagate(False)
 report_Frame.config(height=440, width=226)
 report_Frame.grid(row=1, column=2, padx=30, pady=5)
 
+rpt_Queue = IntVar()
+rpt_Queue.set(0)
+queue_Select = rpt_Queue.get()
 
 # Sub-Report Frames
 report_button = Button(report_Frame, text="Run Report", bg="Red", activebackground="yellow", font=("Arial", 16), pady=8, state=DISABLED)
-report_button.grid(row=0, column=0, pady=8, columnspan=3)
+add_Queue_Button = Button(report_Frame, text="Add", bg="#c4abd2", activebackground="#94819f", font=("Arial", 14), pady=8, width=5, command=lambda: add_Queue(user))
+run_Queue_Button = Button(report_Frame, text="Run Queue", bg="lime", activebackground="yellow", font=("Arial", 14), pady=8, command=lambda: run_Queue())
+
 
 folder_Button = Button(report_Frame, text="Open Downloads Folder", bg="light grey", font=("Arial", 12), pady=3, anchor=N, command=lambda:os.startfile(dir_Downloads))
 folder_Button.grid(row=4, column=0, columnspan=3)
+
+def change_Modes(value):
+    if value == 0:
+        add_Queue_Button.grid_remove()
+        run_Queue_Button.grid_remove()
+        report_Frame.update()
+        root.update()
+        report_button.grid(row=0, column=0, pady=8, columnspan=3)
+        report_Frame.update()
+        root.update()
+    elif value == 1:
+        report_button.grid_remove()
+        report_Frame.update()
+        root.update()
+        add_Queue_Button.grid(row=0, column=0, pady=10, padx=10, columnspan=2, sticky=W)
+        run_Queue_Button.grid(row=0, column=1, pady=10, padx=10, columnspan=2, sticky=E)
+        report_Frame.update()
+        root.update()
+    elif value == 2:
+        report_button.grid(row=0, column=0, pady=8, columnspan=3)
+        report_Frame.update()
+
+change_Modes(2)
 
 # Download type selector
 rpt = IntVar()
@@ -420,6 +441,12 @@ edit_Menu = Menu(topMenu)
 topMenu.add_cascade(label="Edit", menu=edit_Menu)
 edit_Menu.add_command(label="Edit Bar Database", command = lambda:os.startfile(bardbloc))
 
+mode_Menu = Menu(topMenu)
+topMenu.add_cascade(label="Mode", menu=mode_Menu)
+mode_Menu.add_command(label="Single Bar Mode", command = lambda:change_Modes(0))
+mode_Menu.add_command(label="Queue Mode", command = lambda:change_Modes(1))
+
+
 # History Frame
 def history():
     global hist_Frame
@@ -431,9 +458,10 @@ def history():
 history()
 
 
-# Define Button Click Functions
-def resetbg(button):
-    button.config(bg="light grey")
+for text, mode in COMPANIES:
+    compbutton = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16))
+    compbutton.config(command=lambda button=compbutton, mode=mode:[on_company_click(button, mode)])
+    compbutton.pack(pady=15)
 
 
 def on_company_click(button, mode):
@@ -484,11 +512,11 @@ def on_bar_click(button, mode):
     for widget in bars_Frame.winfo_children():
         widget.configure(bg="light grey")
     button.configure(bg="dark grey")
-    report_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(button, mode))
+    report_button.config(bg="lime", state=NORMAL, command=lambda button=button, mode=mode: run_report(mode))
     report_Frame.update()
 
 
-def run_report(button, mode):
+def run_report(mode):
     global dir_BarFolder, workingDir, hist_Track, order_Option, proper, audit_date
     time1 = time.perf_counter()
 
@@ -696,10 +724,70 @@ def run_report(button, mode):
         
     os.chdir(dir_Root)
 
-for text, mode in COMPANIES:
-    button = Button(comp_Frame, text=text, bg="light grey", font=('Arial', 16))
-    button.config(command=lambda button=button, mode=mode:[on_company_click(button, mode)])
-    button.pack(pady=15)
+
+def add_Queue(user):
+    global barQueue, hist_Track
+    # if 'barQueue' not in globals():  # Initialize barQueue if it's not already
+    #     barQueue = deque()
+    barQueue.append(user)
+    Queue_hist = Label(hist_Frame, text=f"Queued {user}")
+
+    if hist_Track >= 12:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+
+    hist_Track = hist_Track + 1
+    
+    Queue_hist.pack()
+    print(list(barQueue))
+    print(len(barQueue))
+
+def run_Queue():
+    global barQueue, barSelect, hist_Track, hist_Frame, dir_BarFolder, proper, userRow, passwd, workingDir, street, city, inv, price, user, bargroup
+    run_Queue_Button.config(state=DISABLED, bg="red")
+    bars = pd.read_csv(dir_DB + "\\bardb.csv")
+    qTime1 = time.perf_counter()
+    print(len(barQueue))
+    if len(barQueue) == 0:
+        print("Queue is Empty")
+    else:
+        
+        while len(barQueue) > 0:
+            bars = pd.read_csv(dir_DB + "\\bardb.csv")
+            barSelect = barQueue.pop()
+            mode = barSelect
+            userRow = bars[bars["user"] == barSelect]
+            user = userRow["user"].iloc[0]
+            passwd = userRow["pass"].iloc[0]
+            proper = userRow["proper"].iloc[0]
+            street = userRow["street"].iloc[0]
+            city = userRow["city"].iloc[0]
+            inv = userRow["invoicename"].iloc[0]
+            price = userRow["price"].iloc[0]
+            bargroup = userRow["group"].iloc[0]
+            barQueue.pop
+            run_report(mode)
+            print(barQueue)
+            Queue_hist = Label(hist_Frame, text=f"Queued {user}")
+            
+            
+            
+    qTime2 = time.perf_counter()
+    qTime = qTime2 - qTime1
+    print(f"Queue Completed in {qTime:0.2f}")
+    if hist_Track >= 12:
+            hist_Frame.forget()
+            hist_Track = 0
+            history()
+            root.update()
+
+    hist_Track = hist_Track + 1
+    queue_Done = Label(hist_Frame, text=f"Queued Completed in {qTime:0.2f}!")
+    queue_Done.pack()
+    run_Queue_Button.config(bg="lime", state=NORMAL)
+
 
 def bars_for_group(group_name):
     # Construct the name of the list variable for the specified group
@@ -787,8 +875,6 @@ def dlSummary(mode):
         log.writelines(L)
         log.close()
         return
-    
-    
 
 
 def dlUsage(mode):
@@ -940,7 +1026,6 @@ def dlVar(mode):
         L = [f"Failed Variance Report\n"]
         log.writelines(L)
         log.close()
-
 
 # Report Adjustments
 def adjust(mode):
@@ -1119,6 +1204,7 @@ def emailGenReport():
         f.write(f"""[InternetShortcut]
     URL={mail_link}
     """)
+
 
 def emailGenInvoice():
     global audit_date
