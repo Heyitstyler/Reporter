@@ -1193,7 +1193,9 @@ def Invoice():
 
 
 def emailGenReport():
-    global audit_date
+    global audit_date, today
+    if 'audit_date' not in globals():
+        audit_date = today
     link_Proper = proper.replace(" ", "%20")
     os.chdir(dir_BarFolder)
     subject = f"GDS%20Consulting's%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}"
@@ -1207,7 +1209,9 @@ def emailGenReport():
 
 
 def emailGenInvoice():
-    global audit_date
+    global audit_date, today
+    if 'audit_date' not in globals():
+        audit_date = today
     link_Proper = proper.replace(" ", "%20")
     os.chdir(dir_BarFolder)
     subject = f"GDS%20Consulting's%20Invoice%20for%20{link_Proper}%20on%20{audit_date}"
