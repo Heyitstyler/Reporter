@@ -1137,6 +1137,7 @@ def namer(mode):
 
 
 def Invoice():
+    global today
     os.chdir(dir_BarFolder)
     today = datetime.datetime.now()
     c = canvas.Canvas(f"{proper} invoice {today:%Y-%m-%d}.pdf", pagesize=letter)
@@ -1215,7 +1216,7 @@ def emailGenInvoice():
     link_Proper = proper.replace(" ", "%20")
     os.chdir(dir_BarFolder)
     subject = f"GDS%20Consulting's%20Invoice%20for%20{link_Proper}%20on%20{audit_date}"
-    body = f"GDS%20Consulting's%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}%0aThanks%20so%20much%21"
+    body = f"GDS%20Consulting's%20Invoice%20for%20Pour%20Cost%20Reports%20for%20{link_Proper}%20on%20{audit_date}%0aThanks%20so%20much%21"
     mail_link = f"https://mail.google.com/mail/u/gdsconsultingllc@gmail.com/?fs=1&tf=cm&source=mailto&su={subject}&body={body}"
     
     with open('Invoice Email.url','w') as f:
